@@ -1,94 +1,137 @@
-# 10x Astro Starter
+# 10x Series Matcher
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+## Project Description
+
+10x Series Matcher helps groups pick a TV series to watch together. It uses everyone's favorite shows to recommend a perfect match, ending the endless scrolling and debates.
+
+## Table of Contents
+
+- [Project Description](#project-description)
+- [Tech Stack](#tech-stack)
+- [Getting Started Locally](#getting-started-locally)
+- [Available Scripts](#available-scripts)
+- [Project Scope](#project-scope)
+- [Project Status](#project-status)
+- [License](#license)
+
+### How It Works
+
+1. **Create Profiles**: Users add their favorite TV series.
+2. **Start a Room**: One user creates a "watching room" and shares an invitation link.
+3. **Get Recommendations**: The app analyzes the group's tastes and suggests 3-5 series with AI-powered justifications.
 
 ## Tech Stack
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+- **Framework**: [Astro](https://astro.build/) 5.0
+- **UI Library**: [React](https://react.dev/) 19
+- **Language**: [TypeScript](https://www.typescriptlang.org/) 5
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) 4.0
+- **UI Components**: [Shadcn/ui](https://ui.shadcn.com/)
+- **External APIs**:
+  - [OpenAI API](https://openai.com/docs/api-reference) for generating recommendations.
+  - [TMDB API](https://www.themoviedb.org/documentation/api) for TV series data and images.
 
-## Prerequisites
+## Getting Started Locally
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+To run the project on your local machine, please follow these steps.
 
-## Getting Started
+### Prerequisites
 
-1. Clone the repository:
+- [Node.js](https://nodejs.org/) (v20.x or later recommended)
+- [npm](https://www.npmjs.com/) (comes with Node.js)
 
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+### Installation
 
-2. Install dependencies:
+1. **Clone the repository:**
 
-```bash
-npm install
-```
+    ```sh
+    git clone https://github.com/your-username/10x-series-matcher.git
+    cd 10x-series-matcher
+    ```
 
-3. Run the development server:
+2. **Install dependencies:**
 
-```bash
-npm run dev
-```
+    ```sh
+    npm install
+    ```
 
-4. Build for production:
+3. **Set up environment variables:**
+    Create a `.env` file in the root of the project by copying the example file:
 
-```bash
-npm run build
-```
+    ```sh
+    cp .env.example .env
+    ```
+
+    You will need to add your API keys to the `.env` file:
+
+    ```sh
+    # Get your API key from https://platform.openai.com/
+    OPENAI_API_KEY="your-openai-api-key"
+
+    # Get your API key from https://www.themoviedb.org/
+    TMDB_API_KEY="your-tmdb-api-key"
+    ```
+
+4. **Run the development server:**
+
+    ```sh
+    npm run dev
+    ```
+
+    The application will be available at `http://localhost:4321`.
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+You can run the following scripts from the project root:
 
-## Project Structure
+- `npm run dev`: Starts the development server.
+- `npm run start`: An alias for `npm run dev`.
+- `npm run build`: Builds the application for production.
+- `npm run preview`: Serves the production build locally for previewing.
+- `npm run lint`: Lints the codebase for errors.
+- `npm run lint:fix`: Lints the codebase and automatically fixes issues.
 
-```md
-.
-├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
-```
+## Project Scope
 
-## AI Development Support
+This section outlines the features included in the Minimum Viable Product (MVP) and what is planned for future versions.
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+### In Scope (MVP)
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+- ✅ A fully functional web application.
+- ✅ Recommendations for TV series only.
+- ✅ Free access for all users.
+- ✅ Persistent "watching room" links that do not expire.
+- ✅ Users must create an account to add their preferences.
 
-### Cursor IDE
+### Out of Scope (Future)
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
+- ❌ Native mobile applications (iOS, Android).
+- ❌ Recommendations for movies.
+- ❌ Subscription models or other forms of monetization.
+- ❌ History of past sessions and recommendations.
+- ❌ A feedback system to rate recommendation accuracy.
+- ❌ Advanced filtering for results (e.g., by genre, streaming platform).
 
-### GitHub Copilot
+## Project Status
 
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
+The project is currently **in active development**.
 
-### Windsurf
+### Implemented Features
 
-The `.windsurfrules` file contains AI configuration for Windsurf.
+- User registration and login (US-001, US-002)
+- User logout (US-003)
+- Search for series via TMDB API (US-004)
+- Add/Remove series from a user's favorite list (US-005, US-007)
+- View favorite series list (US-006)
 
-## Contributing
+### Upcoming Features
 
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+- Creating and managing "watching rooms" (US-008)
+- Invitation system via shareable link (US-009)
+- Joining a room (US-010)
+- Recommendation generation via OpenAI API (US-011)
+- Displaying group recommendations (US-012)
 
 ## License
 
-MIT
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
