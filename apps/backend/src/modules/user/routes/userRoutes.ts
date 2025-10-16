@@ -18,7 +18,7 @@ import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositor
 
 const userSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
-  name: Type.String({ minLength: 1, maxLength: 255 }),
+  name: Type.String({ minLength: 1, maxLength: 64 }),
   email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
   createdAt: Type.String({ format: 'date-time' }),
 });
@@ -76,7 +76,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   fastify.post('/users/register', {
     schema: {
       body: Type.Object({
-        name: Type.String({ minLength: 1, maxLength: 255 }),
+        name: Type.String({ minLength: 1, maxLength: 64 }),
         email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
         password: Type.String({ minLength: 8, maxLength: 64 }),
       }),

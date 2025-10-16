@@ -73,7 +73,7 @@ export default function LoginPage() {
               </div>
               <button
                 onClick={handleBackToLogin}
-                className="w-full h-11 bg-foreground hover:bg-foreground/90 text-background font-medium rounded-md transition-all duration-200"
+                className="w-full h-11 bg-foreground hover:bg-foreground/90 text-background font-medium rounded-md transition-all duration-200 cursor-pointer"
               >
                 Back to Sign In
               </button>

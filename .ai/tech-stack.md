@@ -15,14 +15,7 @@
 - Fastify jako framework HTTP z pluginowym systemem modularyzacji
 - Drizzle ORM do typowanych zapytań do bazy danych PostgreSQL
 - TypeBox do walidacji schematów request/response
-- Pino do strukturalnego logowania (przez LoggerService)
-- Vitest jako framework testowy
-- bcrypt do hashowania haseł
 - JWT do autoryzacji i autentykacji
-- config do zarządzania konfiguracją środowiskową
-- Helmet i CORS do zabezpieczeń
-
-## Architektura i Pattern
 
 ## AI - Komunikacja z modelami przez usługę Openrouter.ai
 

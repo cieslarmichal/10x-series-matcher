@@ -11,6 +11,7 @@ Głównym celem produktu jest uproszczenie i przyspieszenie procesu decyzyjnego,
 ## 2. Problem użytkownika
 
 Grupy osób często napotykają trudności przy wspólnej decyzji, co obejrzeć. Ten problem wynika z kilku kluczowych czynników:
+
 - Różnice w gustach: Każdy członek grupy ma inne preferencje, co utrudnia znalezienie tytułu, który zadowoli wszystkich.
 - Paraliż decyzyjny: Ogromna liczba dostępnych seriali na różnych platformach streamingowych prowadzi do przeciążenia informacyjnego i trudności w podjęciu decyzji.
 - Czasochłonność: Proces poszukiwania i negocjacji jest czasochłonny i często kończy się frustracją lub rezygnacją ze wspólnego oglądania.
@@ -42,6 +43,7 @@ Grupy osób często napotykają trudności przy wspólnej decyzji, co obejrzeć.
 ## 4. Granice produktu
 
 ### W zakresie (MVP)
+
 - Aplikacja będzie dostępna wyłącznie jako aplikacja webowa.
 - Rekomendacje będą dotyczyć tylko i wyłącznie seriali.
 - Dostęp do aplikacji będzie w pełni darmowy.
@@ -49,6 +51,7 @@ Grupy osób często napotykają trudności przy wspólnej decyzji, co obejrzeć.
 - Użytkownik dołączający do sesji musi założyć konto, aby dodać swoje preferencje.
 
 ### Poza zakresem (MVP)
+
 - Natywne aplikacje mobilne (iOS, Android).
 - Rekomendacje dla filmów.
 - Systemy subskrypcji lub inne formy monetyzacji.
