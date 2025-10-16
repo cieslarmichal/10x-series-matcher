@@ -1,0 +1,161 @@
+project:
+  type: monorepo
+  workspace: npm + turborepo
+
+rules:
+  general:
+    - Use TypeScript in strict mode
+    - Disallow "any", "ts-ignore", or lint disabling
+    - Use ES module syntax (import/export)
+    - Prefer modern Node.js and ES features
+    - Always use async/await
+    - If unfinished, add "TODO:" comments
+    - Keep code self-explanatory; minimal comments describing purpose only
+    - No dead code or unused imports
+    - Follow existing ESLint and Prettier configs in the repo
+
+  backend:
+    stack: [Fastify, Drizzle ORM, Postgres, S3, TypeBox, Vitest]
+    structure:
+      - Organize by feature modules via Fastify plugin system
+      - Register routes with fastify.register()
+      - Use Fastify hooks like onRequest, preHandler, onSend
+      - Validate request/response using TypeBox schemas
+    nodejs_compatibility:
+      - Code must be executable directly with `node` command
+      - Avoid TypeScript enums; use const objects or union types instead
+      - Avoid constructor property declarations; use traditional constructor assignment
+      - Ensure all TypeScript features used compile to standard JavaScript
+    database:
+      - Use Drizzle ORM only, no raw SQL unless strictly necessary
+      - Prefer typed queries and inferred return types
+    transactions:
+      - Use Drizzle's transaction API (`db.transaction(async (tx) => { ... })`)
+      - Group multi-step write operations into single transactions
+      - Use serializable isolation level for critical consistency flows
+      - Roll back transaction on any error (never partially commit)
+      - Define transaction boundaries in actions layer (not in routes)
+      - Prefer idempotent logic for retries
+      - For concurrency-sensitive operations, use Postgres advisory or row-level locks
+      - Log transaction duration and failures for observability
+    testing:
+      - Use Vitest for all logic and action classes
+      - Update or extend tests when modifying files containing logic
+      - Test files suffix is .test.ts
+      - Use createTestContext() for test setup with mocked services
+      - Use truncateTables() for database cleanup between tests
+      - Mock external services (EmailService) in tests
+      - Use globalSetup for database migrations in test environment
+      - Test both success and error scenarios
+      - Use Generator class for creating test data
+    quality:
+      - Suggest refactors for duplicate logic
+    error_handling:
+      - Use custom error classes extending BaseError with context
+      - Implement centralized error serialization with serializeError()
+      - Use specific error types: InputNotValidError, ResourceNotFoundError, OperationNotValidError, ResourceAlreadyExistsError, UnauthorizedAccessError, ForbiddenAccessError
+      - Never expose stack traces in production responses
+      - Log all errors with structured context (reqId, endpoint, error details)
+      - Handle TypeError separately with generic internal server error response
+    logging:
+      - Use Pino for structured logging with LoggerService wrapper
+      - Log levels: debug, info, warn, error
+      - No console.log or console.error
+      - Include structured context in all log entries (message + context object)
+      - Use request ID (reqId) for request tracing
+      - Log authentication events, business operations, and errors
+      - Never log sensitive data (passwords, tokens, PII)
+      - Use consistent log message format with relevant context
+    configuration:
+      - Use config module with environment-specific JSON files
+      - Validate configuration with TypeBox schemas at startup
+      - Use custom-environment-variables.json for env var mapping
+      - Support multiple environments: development, staging, production, test, local
+      - Fail fast on configuration errors with ConfigurationError
+      - Use centralized config creation with createConfig()
+
+  frontend:
+    stack: [React, React Router, Zod, Tailwind CSS, Radix UI, React Hook Form]
+    rules:
+      - Use functional components and hooks
+      - Validate form data with Zod
+      - Use HTTP-only cookies for refresh token and memory for access token
+      - Consume backend via REST API
+      - Use Tailwind classes semantically (no inline styles)
+      - Keep component structure modular and clean
+    state_management:
+      - Use React Context for global state (AuthContext)
+      - Use React Hook Form for form state management
+      - Implement silent token refresh with useEffect and intervals
+      - Use useCallback for performance optimization
+      - Manage access token in memory, refresh token in HTTP-only cookies
+    components:
+      - Use Radix UI primitives for accessible components
+      - Create reusable UI components in components/ui/
+      - Use TypeScript interfaces for component props
+      - Implement proper loading and error states
+      - Use React Router loaders for data fetching
+    forms:
+      - Use react-hook-form with zodResolver for validation
+      - Implement proper form error handling and display
+      - Use controlled components with proper state management
+      - Validate on touched/blur for better UX
+
+  security:
+    general:
+      - Never log sensitive data (passwords, tokens, PII)
+      - Enforce strict CORS (trusted origins only)
+      - Use Helmet for security headers
+      - Validate and sanitize all user input
+      - Escape dynamic data
+      - Use UUIDs v7
+      - Require HTTP-only, Secure, and SameSite=strict cookies
+      - Use CSRF protection for unsafe operations
+      - Hash passwords with bcrypt (>=12 rounds)
+      - Apply rate limiting and IP blocking on auth endpoints
+      - Enforce least privilege in DB permissions
+      - Require centralized auth check via Fastify onRequest hook
+      - Enable ETag or version validation on sensitive endpoints
+
+  scalability:
+    general:
+      - Design backend as stateless
+      - Use Postgres connection pooling
+      - Cache frequent queries (Redis or Fastify cache plugins)
+      - Use pagination for requests for many items
+      - Avoid N+1 queries; use Drizzle relations or joins
+      - Use CDN for static assets
+      - Log and monitor slow queries; optimize indexes regularly
+      - Memoize expensive computations
+      - Expose /health and /ready endpoints for orchestration
+
+  build:
+    - "Use `npm run build:dev` to build all apps"
+    - Install packages via root workspace:
+      - "Shared: `npm i package`"
+      - "Backend: `npm i package --workspace=@apps/backend`"
+
+linting:
+  eslint:
+    respect_repo_config: true
+    autofix: true
+    on_save: true
+  prettier:
+    respect_repo_config: true
+    format_on_save: true
+    check_before_commit: true
+
+cursor:
+  suggestions:
+    - Suggest converting manual logic into Fastify plugins or hooks
+    - Suggest caching frequently accessed queries
+    - Suggest adding rate limiting or sanitization where missing
+    - Suggest async workflows or message queues for heavy logic
+    - Respect repo ESLint/Prettier setup when generating or editing code
+    - Suggest using proper error handling with custom error classes
+    - Suggest adding structured logging for business operations
+    - Suggest implementing proper transaction boundaries
+    - Suggest using TypeBox schemas for request/response validation
+    - Suggest adding proper authentication/authorization middleware
+    - Suggest using React Hook Form with Zod validation for forms
+    - Suggest implementing proper loading and error states in components
