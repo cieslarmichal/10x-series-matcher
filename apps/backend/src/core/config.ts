@@ -25,6 +25,10 @@ const configSchema = Type.Object({
     host: Type.String({ minLength: 1 }),
     port: Type.Number({ minimum: 1, maximum: 65535 }),
   }),
+  tmdb: Type.Object({
+    apiKey: Type.String({ minLength: 1 }),
+    baseUrl: Type.String({ minLength: 1 }),
+  }),
 });
 
 export type Config = Static<typeof configSchema>;

@@ -12,5 +12,8 @@
     "refresh": {
       "secret": "12321313423565365654546654121890008b"
     }
+  },
+  "tmdb": {
+    "apiKey": "test-tmdb-api-key"
   }
 }

@@ -98,22 +98,6 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
-  fastify.get('/users/me', {
-    schema: {
-      response: {
-        200: userSchema,
-      },
-    },
-    preHandler: [authenticationMiddleware],
-    handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
-
-      const user = await findUserAction.execute(userId);
-
-      return reply.send(mapUserToResponse(user));
-    },
-  });
-
   fastify.post('/users/login', {
     schema: {
       body: Type.Object({
@@ -171,6 +155,22 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       reply.setCookie(refreshTokenCookie.name, result.refreshToken, refreshTokenCookie.config);
 
       return reply.send({ accessToken: result.accessToken });
+    },
+  });
+
+  fastify.get('/users/me', {
+    schema: {
+      response: {
+        200: userSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+
+      const user = await findUserAction.execute(userId);
+
+      return reply.send(mapUserToResponse(user));
     },
   });
 

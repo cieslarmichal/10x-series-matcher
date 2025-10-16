@@ -9,6 +9,7 @@ import { fastify, type FastifyInstance } from 'fastify';
 import type { FastifySchemaValidationError } from 'fastify/types/schema.js';
 
 import { TokenService } from '../common/auth/tokenService.ts';
+import { ExternalServiceError } from '../common/errors/externalServiceError.ts';
 import { ForbiddenAccessError } from '../common/errors/forbiddenAccessError.ts';
 import { InputNotValidError } from '../common/errors/inputNotValidError.ts';
 import { OperationNotValidError } from '../common/errors/operationNotValidError.ts';
@@ -19,6 +20,7 @@ import { UnauthorizedAccessError } from '../common/errors/unathorizedAccessError
 import { httpStatusCodes } from '../common/http/httpStatusCode.ts';
 import { type LoggerService } from '../common/logger/loggerService.ts';
 import type { Database } from '../infrastructure/database/database.ts';
+import { seriesRoutes } from '../modules/series/routes/seriesRoutes.ts';
 import { userRoutes } from '../modules/user/routes/userRoutes.ts';
 
 import { type Config } from './config.ts';
@@ -220,6 +222,10 @@ export class HttpServer {
         return reply.status(httpStatusCodes.forbidden).send(responseError);
       }
 
+      if (error instanceof ExternalServiceError) {
+        return reply.status(httpStatusCodes.badGateway).send(responseError);
+      }
+
       return reply.status(httpStatusCodes.internalServerError).send({
         name: 'InternalServerError',
         message: 'Internal server error',
@@ -254,6 +260,12 @@ export class HttpServer {
 
     await this.fastifyServer.register(userRoutes, {
       database: this.database,
+      config: this.config,
+      loggerService: this.loggerService,
+      tokenService,
+    });
+
+    await this.fastifyServer.register(seriesRoutes, {
       config: this.config,
       loggerService: this.loggerService,
       tokenService,

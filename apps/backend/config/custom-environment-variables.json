@@ -13,5 +13,8 @@
     "refresh": {
       "secret": "REFRESH_TOKEN_SECRET"
     }
+  },
+  "tmdb": {
+    "apiKey": "TMDB_API_KEY"
   }
 }

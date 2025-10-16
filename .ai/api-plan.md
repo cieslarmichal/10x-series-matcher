@@ -154,11 +154,10 @@
         "addedAt": "iso-8601-date-string"
       }
     ],
-    "pagination": {
+    "metadata": {
       "page": 1,
-      "limit": 20,
-      "totalItems": 1,
-      "totalPages": 1
+      "pageSize": 20,
+      "total": 1
     }
   }
   ```
@@ -216,26 +215,59 @@
 - **Query Parameters**:
   - `query` (string, required): The search term.
   - `page` (integer, optional, default: 1): The page number of results to fetch.
-- **Response Body**: (Mirrors TMDB API response structure)
+- **Response Body**:
 
   ```json
   {
-    "page": 1,
-    "results": [
+    "data": [
       {
         "id": 1399,
         "name": "Game of Thrones",
-        "poster_path": "/u3bZgnGQ9T01sWNhyveQz0wz0IL.jpg",
-        "overview": "Seven noble families fight for control of the mythical land of Westeros..."
+        "posterPath": "/u3bZgnGQ9T01sWNhyveQz0wz0IL.jpg",
+        "overview": "Seven noble families fight for control of the mythical land of Westeros...",
+        "firstAirDate": "2011-04-17",
+        "voteAverage": 8.4
       }
     ],
-    "total_pages": 10,
-    "total_results": 198
+    "metadata": {
+      "page": 1,
+      "pageSize": 20,
+      "total": 198
+    }
   }
   ```
 
 - **Success Codes**: `200 OK`
 - **Error Codes**: `400 Bad Request` (Missing query), `401 Unauthorized`, `502 Bad Gateway` (TMDB API error)
+
+#### Get series details by ID
+
+- **Method**: `GET`
+- **Path**: `/series/:seriesTmdbId`
+- **Description**: Retrieves detailed information about a specific TV series from TMDB.
+- **Authentication**: Required.
+- **URL Parameters**:
+  - `seriesTmdbId` (integer): The TMDB ID of the series.
+- **Response Body**:
+
+  ```json
+  {
+    "id": 1399,
+    "name": "Game of Thrones",
+    "posterPath": "/u3bZgnGQ9T01sWNhyveQz0wz0IL.jpg",
+    "backdropPath": "/mUkuc2wyV9dHLG0D0Loaw5pO2s8.jpg",
+    "overview": "Seven noble families fight for control of the mythical land of Westeros...",
+    "firstAirDate": "2011-04-17",
+    "genres": ["Sci-Fi & Fantasy", "Drama", "Action & Adventure"],
+    "numberOfSeasons": 8,
+    "numberOfEpisodes": 73,
+    "status": "Ended",
+    "voteAverage": 8.4
+  }
+  ```
+
+- **Success Codes**: `200 OK`
+- **Error Codes**: `401 Unauthorized`, `404 Not Found` (Series not found), `502 Bad Gateway` (TMDB API error)
 
 ---
 
@@ -277,17 +309,27 @@
 - **Path**: `/watchrooms`
 - **Description**: Retrieves a list of all watchrooms the current user is a participant of.
 - **Authentication**: Required.
+- **Query Parameters**:
+  - `page` (integer, optional, default: 1): The page number for pagination.
+  - `limit` (integer, optional, default: 20): The number of items per page.
 - **Response Body**:
 
   ```json
-  [
-    {
-      "id": "uuid-v7-string",
-      "name": "Weekend Binge",
-      "ownerId": "uuid-v7-of-owner",
-      "participantCount": 3
+  {
+    "data": [
+      {
+        "id": "uuid-v7-string",
+        "name": "Weekend Binge",
+        "ownerId": "uuid-v7-of-owner",
+        "participantCount": 3
+      }
+    ],
+    "metadata": {
+      "page": 1,
+      "pageSize": 20,
+      "total": 5
     }
-  ]
+  }
   ```
 
 - **Success Codes**: `200 OK`
@@ -447,9 +489,10 @@ PATCH /watchrooms/:watchroomId
 DELETE /watchrooms/:watchroomId/participants/me
 DELETE /watchrooms/:watchroomId/participants/:userId
 3. Series Module
-This module would act as a proxy to the external TMDB API. Its sole responsibility would be to handle searching for series.
+This module acts as a proxy to the external TMDB API. It handles searching for series and retrieving detailed series information.
 Endpoints:
 GET /series/search
+GET /series/:seriesTmdbId
 4. Recommendation Module
 While the recommendation endpoint is nested under the watchroom's path, the logic for generating AI recommendations is a distinct domain. Creating a separate module for it promotes separation of concerns and would make the system easier to maintain as the recommendation logic grows.
 Endpoints:

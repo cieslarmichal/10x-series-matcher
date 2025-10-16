@@ -8,6 +8,7 @@ export const httpStatusCodes = {
   notFound: 404,
   conflict: 409,
   internalServerError: 500,
+  badGateway: 502,
 } as const;
 
 export type HttpStatusCode = (typeof httpStatusCodes)[keyof typeof httpStatusCodes];
