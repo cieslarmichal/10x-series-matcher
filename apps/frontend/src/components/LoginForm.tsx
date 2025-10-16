@@ -45,22 +45,21 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="px-6">
+    <div>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4"
+          className="space-y-5"
         >
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700">Email</FormLabel>
+                <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="name@domain.com"
-                    className="h-11 border-gray-200 focus:border-teal-500 focus:ring-teal-500/20 placeholder:text-gray-400"
                     {...field}
                   />
                 </FormControl>
@@ -73,20 +72,19 @@ export default function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700">Password</FormLabel>
+                <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
-                      placeholder="Password"
+                      placeholder="Enter your password"
                       type={showPassword ? 'text' : 'password'}
-                      className="h-11 border-gray-200 focus:border-teal-500 focus:ring-teal-500/20"
                       {...field}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                       tabIndex={-1}
                     >
@@ -101,7 +99,7 @@ export default function LoginForm() {
 
           <Button
             type="submit"
-            className="w-full h-11 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:text-gray-500 font-medium transition-all duration-200 shadow-sm hover:shadow-md mt-6"
+            className="w-full h-11 mt-6"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? 'Signing in...' : 'Sign In'}
@@ -109,7 +107,7 @@ export default function LoginForm() {
         </form>
       </Form>
       {form.formState.errors.root && (
-        <div className="text-red-600 text-sm mt-3 text-center bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="text-destructive text-sm mt-4 text-center bg-destructive/10 border border-destructive/20 rounded-md p-3">
           {form.formState.errors.root.message}
         </div>
       )}

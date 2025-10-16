@@ -1,5 +1,5 @@
 {
-  "id": "751f11a8-b4d9-419c-9971-47ff3e2adbd8",
+  "id": "320a264c-e6e9-4a12-a3c3-724108ebdd89",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -63,6 +63,12 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
           "notNull": true
         },
         "email": {
