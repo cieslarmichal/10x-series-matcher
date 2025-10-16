@@ -1,19 +1,28 @@
 # Tech Stack
 
-## Frontend - Astro z React dla komponentów interaktywnych
+## Frontend - React
 
-- Astro 5 pozwala na tworzenie szybkich, wydajnych stron i aplikacji z minimalną ilością JavaScript
-- React 19 zapewni interaktywność tam, gdzie jest potrzebna
-- TypeScript 5 dla statycznego typowania kodu i lepszego wsparcia IDE
-- Tailwind 4 pozwala na wygodne stylowanie aplikacji
-- Shadcn/ui zapewnia bibliotekę dostępnych komponentów React, na których oprzemy UI
+- React 18.3 dla nowoczesnej, reaktywnej architektury UI
+- TypeScript w strict mode dla pełnej bezpieczeństwa typów
+- React Router 7.2 do zarządzania routingiem i nawigacją
+- Tailwind CSS 4.0 z @tailwindcss/vite do szybkiego stylowania
+- Radix UI dla komponentów primitywnych
+- React Hook Form z Zod do walidacji formularzy
 
-## Backend - Supabase jako kompleksowe rozwiązanie backendowe
+## Backend - Node.js, TypeScript, Fastify, Postgres
 
-- Zapewnia bazę danych PostgreSQL
-- Zapewnia SDK w wielu językach, które posłużą jako Backend-as-a-Service
-- Jest rozwiązaniem open source, które można hostować lokalnie lub na własnym serwerze
-- Posiada wbudowaną autentykację użytkowników
+- Node.js z TypeScript w strict mode
+- Fastify jako framework HTTP z pluginowym systemem modularyzacji
+- Drizzle ORM do typowanych zapytań do bazy danych PostgreSQL
+- TypeBox do walidacji schematów request/response
+- Pino do strukturalnego logowania (przez LoggerService)
+- Vitest jako framework testowy
+- bcrypt do hashowania haseł
+- JWT do autoryzacji i autentykacji
+- config do zarządzania konfiguracją środowiskową
+- Helmet i CORS do zabezpieczeń
+
+## Architektura i Pattern
 
 ## AI - Komunikacja z modelami przez usługę Openrouter.ai
 

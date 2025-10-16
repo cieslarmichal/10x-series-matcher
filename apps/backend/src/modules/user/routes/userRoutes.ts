@@ -18,6 +18,7 @@ import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositor
 
 const userSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
+  name: Type.String({ minLength: 1, maxLength: 255 }),
   email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
   createdAt: Type.String({ format: 'date-time' }),
 });
@@ -33,6 +34,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   const mapUserToResponse = (user: User): Static<typeof userSchema> => {
     const userResponse: Static<typeof userSchema> = {
       id: user.id,
+      name: user.name,
       email: user.email,
       createdAt: user.createdAt.toISOString(),
     };
@@ -74,6 +76,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   fastify.post('/users/register', {
     schema: {
       body: Type.Object({
+        name: Type.String({ minLength: 1, maxLength: 255 }),
         email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
         password: Type.String({ minLength: 8, maxLength: 64 }),
       }),
@@ -83,6 +86,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
     handler: async (request, reply) => {
       const user = await createUserAction.execute({
+        name: request.body.name,
         email: request.body.email,
         password: request.body.password,
       });

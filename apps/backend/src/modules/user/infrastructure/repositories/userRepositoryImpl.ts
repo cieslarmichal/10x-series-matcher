@@ -50,6 +50,7 @@ export class UserRepositoryImpl implements UserRepository {
   private mapToUser(dbUser: typeof users.$inferSelect): User {
     const user: User = {
       id: dbUser.id,
+      name: dbUser.name,
       email: dbUser.email,
       password: dbUser.password,
       createdAt: dbUser.createdAt,

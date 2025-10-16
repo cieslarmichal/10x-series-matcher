@@ -2,6 +2,7 @@ import { apiRequest } from '../apiRequest';
 import { User } from '../types/user';
 
 type RegisterUserRequest = {
+  name: string;
   email: string;
   password: string;
 };
@@ -12,6 +13,7 @@ export const registerUser = async (input: RegisterUserRequest): Promise<User> =>
       method: 'POST',
       requiresAuth: false,
       body: {
+        name: input.name,
         email: input.email,
         password: input.password,
       },

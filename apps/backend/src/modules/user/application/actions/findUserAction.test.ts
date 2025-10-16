@@ -37,6 +37,7 @@ describe('FindUserAction', () => {
 
       expect(result.id).toBe(createdUser.id);
       expect(result.email).toBe(userData.email);
+      expect(result.name).toBe(userData.name);
     });
 
     it('throws ResourceNotFoundError when user does not exist', async () => {

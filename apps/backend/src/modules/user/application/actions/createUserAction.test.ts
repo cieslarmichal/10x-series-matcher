@@ -49,6 +49,7 @@ describe('CreateUserAction', () => {
       expect(result).toBeDefined();
       expect(result.id).toBeDefined();
       expect(result.email).toBe(userData.email);
+      expect(result.name).toBe(userData.name);
       expect(result.createdAt).toBeDefined();
 
       expect(result.password).not.toBe(userData.password);

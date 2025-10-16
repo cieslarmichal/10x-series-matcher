@@ -13,6 +13,7 @@ import { EyeIcon, EyeOffIcon, InfoIcon } from 'lucide-react';
 
 const formSchema = z
   .object({
+    name: z.string().min(1, 'Name is required').max(255),
     email: z.string().email('Invalid email address').max(64),
     password: z
       .string()
@@ -52,6 +53,7 @@ export default function RegisterForm({ onSuccess }: Props) {
   async function onSubmit(values: FormValues) {
     try {
       await registerUser({
+        name: values.name,
         email: values.email,
         password: values.password,
       });
@@ -71,6 +73,24 @@ export default function RegisterForm({ onSuccess }: Props) {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-4"
         >
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium text-gray-700">Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="John Doe"
+                    className="h-11 border-gray-200 focus:border-teal-500 focus:ring-teal-500/20 placeholder:text-gray-400"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="email"
