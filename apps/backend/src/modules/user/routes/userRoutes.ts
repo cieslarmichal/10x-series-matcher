@@ -132,6 +132,23 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
+  fastify.post('/users/logout', {
+    schema: {
+      response: {
+        204: Type.Null(),
+      },
+    },
+    handler: async (request, reply) => {
+      const refreshToken = request.cookies[refreshTokenCookie.name];
+
+      await logoutUserAction.execute({ refreshToken });
+
+      reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
+
+      return reply.status(204).send();
+    },
+  });
+
   fastify.post('/users/refresh-token', {
     schema: {
       response: {
@@ -168,23 +185,6 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       const { id } = request.params;
 
       await deleteUserAction.execute(id);
-
-      return reply.status(204).send();
-    },
-  });
-
-  fastify.post('/users/logout', {
-    schema: {
-      response: {
-        204: Type.Null(),
-      },
-    },
-    handler: async (request, reply) => {
-      const refreshToken = request.cookies[refreshTokenCookie.name];
-
-      await logoutUserAction.execute({ refreshToken });
-
-      reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
 
       return reply.status(204).send();
     },
