@@ -5,26 +5,44 @@ import {
   createParamsAuthorizationMiddleware,
 } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
+import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
+import { AddFavoriteSeriesAction } from '../application/actions/addFavoriteSeriesAction.ts';
 import { CreateUserAction } from '../application/actions/createUserAction.ts';
 import { DeleteUserAction } from '../application/actions/deleteUserAction.ts';
 import { FindUserAction } from '../application/actions/findUserAction.ts';
+import { GetUserFavoriteSeriesAction } from '../application/actions/getUserFavoriteSeriesAction.ts';
 import { LoginUserAction } from '../application/actions/loginUserAction.ts';
 import { LogoutUserAction } from '../application/actions/logoutUserAction.ts';
 import { RefreshTokenAction } from '../application/actions/refreshTokenAction.ts';
+import { RemoveFavoriteSeriesAction } from '../application/actions/removeFavoriteSeriesAction.ts';
 import { PasswordService } from '../application/services/passwordService.ts';
 import type { User } from '../domain/types/user.ts';
 import { BlacklistTokenRepositoryImpl } from '../infrastructure/repositories/blacklistTokenRepositoryImpl.ts';
+import { FavoriteSeriesRepositoryImpl } from '../infrastructure/repositories/favoriteSeriesRepositoryImpl.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
-import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 
 const userSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
   name: Type.String({ minLength: 1, maxLength: 64 }),
   email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
   createdAt: Type.String({ format: 'date-time' }),
+});
+
+const favoriteSeriesSchema = Type.Object({
+  seriesTmdbId: Type.Number(),
+  addedAt: Type.String({ format: 'date-time' }),
+});
+
+const favoriteSeriesListSchema = Type.Object({
+  data: Type.Array(favoriteSeriesSchema),
+  metadata: Type.Object({
+    page: Type.Number(),
+    pageSize: Type.Number(),
+    total: Type.Number(),
+  }),
 });
 
 const appEnvironment = process.env['NODE_ENV'];
@@ -61,6 +79,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   const userRepository = new UserRepositoryImpl(database);
   const blacklistTokenRepository = new BlacklistTokenRepositoryImpl(database);
+  const favoriteSeriesRepository = new FavoriteSeriesRepositoryImpl(database);
   const passwordService = new PasswordService(config);
 
   const createUserAction = new CreateUserAction(userRepository, loggerService, passwordService);
@@ -75,6 +94,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     tokenService,
   );
   const logoutUserAction = new LogoutUserAction(blacklistTokenRepository, config, tokenService);
+  const getUserFavoriteSeriesAction = new GetUserFavoriteSeriesAction(favoriteSeriesRepository);
+  const addFavoriteSeriesAction = new AddFavoriteSeriesAction(favoriteSeriesRepository);
+  const removeFavoriteSeriesAction = new RemoveFavoriteSeriesAction(favoriteSeriesRepository);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
   const authorizationMiddleware = createParamsAuthorizationMiddleware();
@@ -204,6 +226,80 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       if (refreshToken) {
         reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
       }
+
+      return reply.status(204).send();
+    },
+  });
+
+  fastify.get('/users/me/favorite-series', {
+    schema: {
+      querystring: Type.Object({
+        page: Type.Optional(Type.Number({ minimum: 1, maximum: 500 })),
+        limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100 })),
+      }),
+      response: {
+        200: favoriteSeriesListSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      const { page = 1, limit = 20 } = request.query;
+
+      const result = await getUserFavoriteSeriesAction.execute(userId, page, limit);
+
+      return reply.send({
+        data: result.favorites.map((favorite) => ({
+          seriesTmdbId: favorite.seriesTmdbId,
+          addedAt: favorite.addedAt.toISOString(),
+        })),
+        metadata: {
+          page,
+          pageSize: limit,
+          total: result.total,
+        },
+      });
+    },
+  });
+
+  fastify.post('/users/me/favorite-series', {
+    schema: {
+      body: Type.Object({
+        seriesTmdbId: Type.Number({ minimum: 1 }),
+      }),
+      response: {
+        201: favoriteSeriesSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      const { seriesTmdbId } = request.body;
+
+      const favorite = await addFavoriteSeriesAction.execute(userId, seriesTmdbId);
+
+      return reply.status(201).send({
+        seriesTmdbId: favorite.seriesTmdbId,
+        addedAt: favorite.addedAt.toISOString(),
+      });
+    },
+  });
+
+  fastify.delete('/users/me/favorite-series/:seriesTmdbId', {
+    schema: {
+      params: Type.Object({
+        seriesTmdbId: Type.Number({ minimum: 1 }),
+      }),
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      const { seriesTmdbId } = request.params;
+
+      await removeFavoriteSeriesAction.execute(userId, seriesTmdbId);
 
       return reply.status(204).send();
     },

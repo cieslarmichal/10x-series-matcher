@@ -1,14 +1,18 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Facebook, Instagram } from 'lucide-react';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { Mail, Phone, MapPin, Facebook, Instagram, Heart, Users, Info } from 'lucide-react';
 
 export default function Footer() {
+  const { userData } = useContext(AuthContext);
+
   return (
     <footer
       className="border-t border-border bg-background py-12 mt-auto"
       aria-label="Footer"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:justify-between md:items-start gap-10">
-        <div className="col-span-1 md:w-1/3">
+        <div className="col-span-1 md:w-1/4">
           <Link
             to="/"
             className="flex items-center gap-3 mb-4 group"
@@ -19,11 +23,52 @@ export default function Footer() {
             <h2 className="text-lg font-semibold tracking-tight">10x Series Matcher</h2>
           </Link>
           <p className="text-sm text-muted-foreground max-w-xs">
-            Modern minimalist monorepo template. Built for scale.
+            Find the perfect series for your group. Get personalized recommendations based on everyone's tastes.
           </p>
         </div>
 
-        <div className="col-span-1 md:w-1/3 md:ml-auto md:flex md:justify-end">
+        {/* Navigation Section */}
+        <div className="col-span-1 md:w-1/4">
+          <h3 className="text-sm font-semibold mb-4 text-foreground tracking-tight">
+            {userData ? 'Your Account' : 'About'}
+          </h3>
+          <div className="space-y-3 text-sm">
+            {userData ? (
+              <>
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <Heart className="h-4 w-4" />
+                  <Link
+                    to="/series"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    My Series
+                  </Link>
+                </div>
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <Users className="h-4 w-4" />
+                  <Link
+                    to="/watchrooms"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    My Watch Rooms
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Info className="h-4 w-4" />
+                <Link
+                  to="/about"
+                  className="hover:text-foreground transition-colors"
+                >
+                  About 10x Series Matcher
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="col-span-1 md:w-1/4 md:ml-auto md:flex md:justify-end">
           <div>
             <h3 className="text-sm font-semibold mb-4 text-foreground tracking-tight">Contact</h3>
             <div className="space-y-3 text-sm">

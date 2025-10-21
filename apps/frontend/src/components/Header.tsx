@@ -1,52 +1,114 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { LogOut } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { User, LogOut, Heart, Users, Menu, X } from 'lucide-react';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@/components/ui/Menubar';
 import { Button } from './ui/Button';
 
+const sections = [
+  { name: 'Home', href: '/' },
+  { name: 'Series', href: '/series', requiresAuth: true },
+  { name: 'Watch Rooms', href: '/watchrooms', requiresAuth: true },
+];
+
 export default function Header() {
   const { userData } = useContext(AuthContext);
+  const location = useLocation();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const initial = (userData?.email?.[0] || 'U').toUpperCase();
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
-      <div className="flex items-center px-4 sm:px-6 lg:px-8 py-3">
-        <div className="w-48 flex items-center">
+    <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm backdrop-blur-sm">
+      <div className="relative flex items-center justify-between gap-2 px-3 sm:px-4 lg:px-8 py-3">
+        {/* Logo */}
+        <div className="flex-shrink-0 flex items-center">
           <Link
-            to={'/'}
-            className="flex items-center gap-3 group"
+            to="/"
+            className="flex items-center gap-2"
           >
             <div className="h-8 w-8 bg-foreground rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
               <span className="text-background font-bold text-sm">SM</span>
             </div>
-            <span className="text-lg font-semibold text-foreground tracking-tight whitespace-nowrap">
-              10x Series Matcher
-            </span>
+            <h2 className="text-lg font-semibold tracking-tight">10x Series Matcher</h2>
           </Link>
         </div>
 
-        <div className="flex-1 flex items-center justify-end">
+        {/* Desktop Navigation - Centered */}
+        <nav className="hidden md:flex absolute left-1/2 transform -translate-x-1/2">
+          <div className="flex items-center space-x-6 lg:space-x-8">
+            {sections
+              .filter((section) => !section.requiresAuth || userData)
+              .map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => navigate(item.href)}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cn(
+                      'relative px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap',
+                      'text-muted-foreground hover:text-primary cursor-pointer',
+                      isActive && 'text-primary',
+                    )}
+                  >
+                    {item.name}
+                    {isActive && <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />}
+                  </button>
+                );
+              })}
+          </div>
+        </nav>
+
+        {/* Desktop Auth Section */}
+        <div className="hidden md:flex flex-shrink-0 items-center ml-auto">
           {userData ? (
-            <div className="min-w-[120px] flex justify-end">
+            <div className="flex items-center justify-end">
               <Menubar className="rounded-none space-x-0 border-none data-[state=open]:!bg-none">
                 <MenubarMenu>
                   <MenubarTrigger
                     omitOpenBg
-                    className="h-9 w-9 rounded-full overflow-hidden bg-secondary ring-1 ring-border hover:ring-foreground transition-all p-0 cursor-pointer"
+                    className="h-10 w-10 rounded-full overflow-hidden bg-muted border-2 border-border hover:border-primary transition-all duration-200 p-0 cursor-pointer shadow-sm hover:shadow-md"
                   >
-                    <span className="h-full w-full flex items-center justify-center text-xs font-semibold text-foreground">
+                    <span className="h-full w-full flex items-center justify-center text-sm font-semibold text-foreground">
                       {initial}
                     </span>
                   </MenubarTrigger>
                   <MenubarContent>
                     <MenubarItem
                       onClick={() => {
+                        navigate('/series');
+                      }}
+                      className="pt-2 hover:text-primary cursor-pointer flex items-center gap-2"
+                    >
+                      <Heart className="h-4 w-4" />
+                      My Series
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => {
+                        navigate('/watchrooms');
+                      }}
+                      className="hover:text-primary cursor-pointer flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4" />
+                      My Watch Rooms
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => {
+                        navigate('/my-profile');
+                      }}
+                      className="hover:text-primary cursor-pointer flex items-center gap-2"
+                    >
+                      <User className="h-4 w-4" />
+                      My Profile
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => {
                         navigate('/logout');
                       }}
-                      className="pt-2 hover:text-foreground cursor-pointer flex items-center gap-2"
+                      className="pt-2 hover:text-primary cursor-pointer flex items-center gap-2"
                     >
                       <LogOut className="h-4 w-4" />
                       Log out
@@ -56,26 +118,153 @@ export default function Header() {
               </Menubar>
             </div>
           ) : (
-            <div className="min-w-[120px] flex items-center gap-3 justify-end">
+            <div className="flex items-center gap-2 lg:gap-3">
               <Button
-                variant="ghost"
-                size="sm"
+                variant="link"
+                size="lg"
                 onClick={() => navigate('/login')}
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-muted-foreground whitespace-nowrap h-10 px-3"
               >
                 Login
               </Button>
               <Button
-                size="sm"
+                size="lg"
                 onClick={() => navigate('/login?tab=register')}
-                className="text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
+                className="text-sm bg-primary hover:bg-primary/90 transition-all duration-300 font-semibold text-primary-foreground rounded-md whitespace-nowrap h-10 px-3"
               >
                 Sign Up
               </Button>
             </div>
           )}
         </div>
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden flex items-center gap-2">
+          {userData ? (
+            <div className="flex items-center gap-2">
+              <Menubar className="rounded-none space-x-0 border-none data-[state=open]:!bg-none">
+                <MenubarMenu>
+                  <MenubarTrigger
+                    omitOpenBg
+                    className="h-8 w-8 rounded-full overflow-hidden bg-muted border-2 border-border hover:border-primary transition-all duration-200 p-0 cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    <span className="h-full w-full flex items-center justify-center text-xs font-semibold text-foreground">
+                      {initial}
+                    </span>
+                  </MenubarTrigger>
+                  <MenubarContent>
+                    <MenubarItem
+                      onClick={() => {
+                        navigate('/series');
+                      }}
+                      className="pt-2 hover:text-primary cursor-pointer flex items-center gap-2"
+                    >
+                      <Heart className="h-4 w-4" />
+                      My Series
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => {
+                        navigate('/watchrooms');
+                      }}
+                      className="hover:text-primary cursor-pointer flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4" />
+                      My Watch Rooms
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => {
+                        navigate('/my-profile');
+                      }}
+                      className="hover:text-primary cursor-pointer flex items-center gap-2"
+                    >
+                      <User className="h-4 w-4" />
+                      My Profile
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => {
+                        navigate('/logout');
+                      }}
+                      className="pt-2 hover:text-primary cursor-pointer flex items-center gap-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Log out
+                    </MenubarItem>
+                  </MenubarContent>
+                </MenubarMenu>
+              </Menubar>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => navigate('/login')}
+              className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground h-8 px-3"
+            >
+              Login
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="h-8 w-8 p-0"
+          >
+            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-border bg-background">
+          <div className="px-3 py-2 space-y-1">
+            {sections
+              .filter((section) => !section.requiresAuth || userData)
+              .map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => {
+                      navigate(item.href);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={cn(
+                      'block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                      'text-muted-foreground hover:text-primary hover:bg-primary/10',
+                      isActive && 'text-primary bg-primary/10',
+                    )}
+                  >
+                    {item.name}
+                  </button>
+                );
+              })}
+
+            {!userData && (
+              <div className="pt-2 border-t border-border">
+                <button
+                  onClick={() => {
+                    navigate('/login');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/login?tab=register');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

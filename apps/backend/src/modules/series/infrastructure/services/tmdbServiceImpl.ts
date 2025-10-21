@@ -10,6 +10,9 @@ interface TmdbApiSeriesResponse {
   readonly overview: string;
   readonly first_air_date?: string;
   readonly vote_average: number;
+  readonly genre_ids?: number[];
+  readonly origin_country?: string[];
+  readonly original_language?: string;
 }
 
 interface TmdbApiSearchResponse {
@@ -152,6 +155,9 @@ export class TmdbServiceImpl implements TmdbService {
       overview: apiSeries.overview,
       firstAirDate: apiSeries.first_air_date || null,
       voteAverage: apiSeries.vote_average,
+      genreIds: apiSeries.genre_ids || [],
+      originCountry: apiSeries.origin_country || [],
+      originalLanguage: apiSeries.original_language || 'en',
     };
 
     return series;

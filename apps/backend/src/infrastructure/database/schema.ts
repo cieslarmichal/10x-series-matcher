@@ -29,6 +29,7 @@ export const userFavoriteSeries = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     seriesTmdbId: integer('series_tmdb_id').notNull(),
+    addedAt: timestamp('added_at').notNull().defaultNow(),
   },
   (table) => [
     index('idx_user_favorite_series_user_id').on(table.userId),

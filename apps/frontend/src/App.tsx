@@ -9,6 +9,10 @@ import { TooltipProvider } from './components/ui/Tooltip.tsx';
 import PrivateRoute from './auth/privateRoute.tsx';
 import LogoutPage from './pages/LogoutPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
+import SeriesPage from './pages/Series.tsx';
+import WatchRoomsPage from './pages/WatchRooms.tsx';
+import AboutPage from './pages/About.tsx';
+import ProfilePage from './pages/Profile.tsx';
 
 const router = createBrowserRouter([
   {
@@ -28,6 +32,34 @@ const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <LogoutPage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: '/series',
+        element: (
+          <PrivateRoute>
+            <SeriesPage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: '/watchrooms',
+        element: (
+          <PrivateRoute>
+            <WatchRoomsPage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: '/about',
+        element: <AboutPage />,
+      },
+      {
+        path: '/my-profile',
+        element: (
+          <PrivateRoute>
+            <ProfilePage />
           </PrivateRoute>
         ),
       },
