@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyHelmet from '@fastify/helmet';
 import fastifyMultipart from '@fastify/multipart';
+import fastifyRateLimit from '@fastify/rate-limit';
 import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import crypto from 'crypto';
 import { fastify, type FastifyInstance } from 'fastify';
 import type { FastifySchemaValidationError } from 'fastify/types/schema.js';
 
@@ -40,8 +39,6 @@ export class HttpServer {
     this.fastifyServer = fastify({
       bodyLimit: 10 * 1024 * 1024,
       logger: false,
-      genReqId: () => crypto.randomUUID(),
-      requestIdLogLabel: 'reqId',
     }).withTypeProvider<TypeBoxTypeProvider>();
   }
 
@@ -49,6 +46,17 @@ export class HttpServer {
     const { host, port } = this.config.server;
 
     this.setupErrorHandler();
+
+    await this.fastifyServer.register(fastifyCookie, { secret: this.config.cookie.secret });
+    await this.fastifyServer.register(fastifyCors, {
+      origin: this.config.frontendUrl,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    });
+    await this.fastifyServer.register(fastifyHelmet);
+    await this.fastifyServer.register(fastifyMultipart, { limits: { fileSize: 1024 * 1024 * 1024 * 4 } });
+    await this.fastifyServer.register(fastifyRateLimit, { global: false });
 
     await this.fastifyServer.register(fastifyMultipart, {
       limits: {
@@ -92,7 +100,6 @@ export class HttpServer {
       if (!request.url.includes('/health')) {
         this.loggerService.info({
           message: 'Incoming request...',
-          reqId: request.id,
           req: {
             method: request.method,
             url: request.url,
@@ -106,7 +113,6 @@ export class HttpServer {
       if (!request.url.includes('/health')) {
         this.loggerService.info({
           message: 'Request completed.',
-          reqId: request.id,
           method: request.method,
           url: request.url,
           statusCode: reply.statusCode,
@@ -119,38 +125,36 @@ export class HttpServer {
       return (data): string => JSON.stringify(data);
     });
 
-    this.addRequestPreprocessing();
+    this.fastifyServer.addHook('preHandler', async (request) => {
+      if (
+        request.body &&
+        typeof request.body === 'object' &&
+        request.headers['content-type']?.includes('application/json')
+      ) {
+        request.body = this.deepTrim(request.body);
+      }
+    });
 
     await this.registerRoutes();
 
     await this.fastifyServer.listen({ port, host });
 
-    this.loggerService.info({
-      message: 'HTTP server started.',
-      port,
-      host,
-    });
+    this.loggerService.info({ message: 'HTTP server started.', port, host });
   }
 
   public async stop(): Promise<void> {
     if (this.isShuttingDown) {
-      this.loggerService.warn({
-        message: 'HTTP server is already shutting down, ignoring stop request...',
-      });
+      this.loggerService.warn({ message: 'HTTP server is already shutting down, ignoring stop request...' });
       return;
     }
 
     this.isShuttingDown = true;
 
-    this.loggerService.info({
-      message: 'Stopping HTTP server...',
-    });
+    this.loggerService.info({ message: 'Stopping HTTP server...' });
 
     await this.fastifyServer.close();
 
-    this.loggerService.info({
-      message: 'HTTP server stopped.',
-    });
+    this.loggerService.info({ message: 'HTTP server stopped.' });
   }
 
   private setupErrorHandler(): void {
@@ -169,7 +173,6 @@ export class HttpServer {
 
         this.loggerService.error({
           message: 'HTTP request error',
-          reqId: request.id,
           error: serializedError,
           endpoint: `${request.method} ${request.url}`,
         });
@@ -179,11 +182,24 @@ export class HttpServer {
           message: 'Internal server error',
         });
       }
+
+      if ('statusCode' in error && error.statusCode === 429) {
+        this.loggerService.warn({
+          message: 'Rate limit exceeded',
+          endpoint: `${request.method} ${request.url}`,
+          error: error.message,
+        });
+
+        return reply.status(429).send({
+          name: 'TooManyRequestsError',
+          message: error.message || 'Rate limit exceeded',
+        });
+      }
+
       const serializedError = serializeError(error);
 
       this.loggerService.error({
         message: 'HTTP request error',
-        reqId: request.id,
         error: serializedError,
         endpoint: `${request.method} ${request.url}`,
       });
@@ -233,26 +249,26 @@ export class HttpServer {
     });
   }
 
-  private addRequestPreprocessing(): void {
-    this.fastifyServer.addHook('preValidation', (request, _reply, next) => {
-      const body = request.body as Record<string, unknown>;
-
-      this.trimStringProperties(body);
-
-      next();
-    });
-  }
-
-  private trimStringProperties(obj: Record<string, any>): void {
-    for (const key in obj) {
-      if (typeof obj[key] === 'string') {
-        obj[key] = obj[key].trim();
-      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-        if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-          this.trimStringProperties(obj[key] as Record<string, any>);
-        }
-      }
+  private deepTrim(obj: unknown): unknown {
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepTrim(item));
     }
+
+    if (obj && typeof obj === 'object') {
+      const trimmedObj: Record<string, unknown> = {};
+
+      for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+        trimmedObj[key] = this.deepTrim(value);
+      }
+
+      return trimmedObj;
+    }
+
+    if (typeof obj === 'string') {
+      return obj.trim();
+    }
+
+    return obj;
   }
 
   private async registerRoutes(): Promise<void> {

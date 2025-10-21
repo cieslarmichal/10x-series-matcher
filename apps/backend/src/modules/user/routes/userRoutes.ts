@@ -18,6 +18,7 @@ import { PasswordService } from '../application/services/passwordService.ts';
 import type { User } from '../domain/types/user.ts';
 import { BlacklistTokenRepositoryImpl } from '../infrastructure/repositories/blacklistTokenRepositoryImpl.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
+import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 
 const userSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
@@ -25,6 +26,8 @@ const userSchema = Type.Object({
   email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
   createdAt: Type.String({ format: 'date-time' }),
 });
+
+const appEnvironment = process.env['NODE_ENV'];
 
 export const userRoutes: FastifyPluginAsyncTypebox<{
   database: Database;
@@ -49,8 +52,8 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     name: 'refresh-token',
     config: {
       httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
-      sameSite: 'strict' as const,
+      secure: appEnvironment !== 'development',
+      sameSite: 'none' as const,
       path: '/',
       maxAge: config.token.refresh.expiresIn,
     },
@@ -87,6 +90,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
         201: userSchema,
       },
     },
+    config: {
+      rateLimit: config.rateLimit.auth,
+    },
     handler: async (request, reply) => {
       const user = await createUserAction.execute({
         name: request.body.name,
@@ -107,6 +113,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       response: {
         200: Type.Object({ accessToken: Type.String() }),
       },
+    },
+    config: {
+      rateLimit: config.rateLimit.auth,
     },
     handler: async (request, reply) => {
       const { email, password } = request.body;
@@ -140,14 +149,15 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     schema: {
       response: {
         200: Type.Object({ accessToken: Type.String() }),
-        401: Type.Null(),
       },
     },
     handler: async (request, reply) => {
       const refreshToken = request.cookies[refreshTokenCookie.name];
 
       if (!refreshToken) {
-        return reply.status(401).send();
+        throw new UnauthorizedAccessError({
+          reason: 'Refresh token cookie not found',
+        });
       }
 
       const result = await refreshTokenAction.execute({ refreshToken });
@@ -185,9 +195,15 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware, authorizationMiddleware],
     handler: async (request, reply) => {
+      const refreshToken = request.cookies[refreshTokenCookie.name];
+
       const { userId } = request.params;
 
       await deleteUserAction.execute(userId);
+
+      if (refreshToken) {
+        reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
+      }
 
       return reply.status(204).send();
     },
