@@ -6,15 +6,11 @@ import { getMyFavoriteSeries } from '../api/queries/getMyFavoriteSeries';
 import { addFavoriteSeries } from '../api/queries/addFavoriteSeries';
 import { removeFavoriteSeries } from '../api/queries/removeFavoriteSeries';
 import { Series, FavoriteSeries } from '../api/types/series';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Search, List } from 'lucide-react';
 
 export default function SeriesPage() {
   const [profileSeriesIds, setProfileSeriesIds] = useState<Set<number>>(new Set());
   const [mySeries, setMySeries] = useState<FavoriteSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'search' | 'manage'>('search');
 
   useEffect(() => {
     // Scroll to top when page loads
@@ -74,71 +70,41 @@ export default function SeriesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="space-y-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight">My Series</h1>
-            <p className="text-xl text-muted-foreground mt-2">Build your profile and manage your favorite TV series</p>
-          </div>
+      <div className="relative overflow-hidden">
+        {/* Subtle grid background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:4rem_4rem]" />
 
-          {/* View Toggle */}
-          <div className="flex justify-center">
-            <div className="bg-muted p-1 rounded-lg">
-              <Button
-                variant={activeView === 'search' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setActiveView('search')}
-                className="gap-2"
-              >
-                <Search className="h-4 w-4" />
-                Search & Add
-              </Button>
-              <Button
-                variant={activeView === 'manage' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setActiveView('manage')}
-                className="gap-2"
-              >
-                <List className="h-4 w-4" />
-                My Series ({mySeries.length})
-              </Button>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="space-y-12">
+            {/* Header */}
+            <div className="text-center">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">My Favorite Series</h1>
+              <p className="text-xl text-muted-foreground mt-3 max-w-2xl mx-auto">
+                Build your taste profile by adding shows you love. The more you add, the better your group
+                recommendations will be.
+              </p>
             </div>
-          </div>
 
-          {/* Search View */}
-          {activeView === 'search' && (
-            <div className="space-y-6">
-              <Card className="p-6">
-                <SearchSeries
-                  onAddToProfile={handleAddToProfile}
-                  profileSeriesIds={profileSeriesIds}
-                />
-              </Card>
+            {/* Search Section */}
+            <SearchSeries
+              onAddToProfile={handleAddToProfile}
+              profileSeriesIds={profileSeriesIds}
+            />
 
-              <div className="text-center text-sm text-muted-foreground">
-                <p>💡 Tip: Add series you love to build your taste profile for better group recommendations</p>
+            {/* My Series Section */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  Your Favorite Shows ({mySeries.length})
+                </h2>
               </div>
+              <FavoriteSeriesList
+                favorites={mySeries}
+                onRemoveFavorite={handleRemoveSeries}
+                isLoading={isLoading}
+              />
             </div>
-          )}
-
-          {/* Manage View */}
-          {activeView === 'manage' && (
-            <div className="space-y-6">
-              <Card className="p-6">
-                <FavoriteSeriesList
-                  favorites={mySeries}
-                  onRemoveFavorite={handleRemoveSeries}
-                  isLoading={isLoading}
-                />
-              </Card>
-
-              {!isLoading && mySeries.length > 0 && (
-                <div className="text-center text-sm text-muted-foreground">
-                  <p>💡 Tip: Use your series to create watch rooms and get group recommendations</p>
-                </div>
-              )}
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

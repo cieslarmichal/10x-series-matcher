@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { getMyFavoriteSeries } from '../api/queries/getMyFavoriteSeries';
 import { Button } from '../components/ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Heart, Users } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../components/ui/Card';
+import { Heart, Users, BrainCircuit, PartyPopper } from 'lucide-react';
 
 export default function HomePage() {
   const { userData, userDataInitialized } = useContext(AuthContext);
@@ -54,169 +54,237 @@ export default function HomePage() {
               {/* Welcome Section */}
               <div className="text-center">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-4 tracking-tighter">
-                  Ready to find your group's next favorite series?
+                  Never argue about what to watch again
                 </h1>
                 <p className="text-xl sm:text-2xl text-muted-foreground font-light tracking-tight max-w-4xl mx-auto">
-                  Build your profile and create watch rooms for AI-powered recommendations
+                  Rate your favorite shows, create watch rooms, and let AI find the perfect series for your group
                 </p>
               </div>
 
-              {/* Profile Status */}
-              <Card className="bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700">
-                <CardContent className="pt-8 pb-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Series Count */}
-                    <div className="space-y-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-xl">
-                          <Heart className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-                        </div>
-                        <div>
-                          <p className="text-3xl font-bold text-foreground">{favoritesCount}</p>
-                          <p className="text-sm text-muted-foreground">Series in profile</p>
-                        </div>
+              {/* Main Actions Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                {/* Card 1: Your Profile / Match Power */}
+                <Card className="flex flex-col h-full border-2 transition-shadow hover:shadow-lg hover:border-primary/30">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-primary/10 rounded-full">
+                        <Heart className="h-6 w-6 text-primary" />
                       </div>
-
-                      {/* Progress Bar */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-foreground">Profile completion</span>
-                          <span className="text-sm text-muted-foreground">{favoritesCount}/10 series</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-500 ${
-                              favoritesCount === 0
-                                ? 'bg-gray-300 dark:bg-gray-600 w-0'
-                                : favoritesCount < 5
-                                  ? 'bg-amber-400'
-                                  : 'bg-emerald-500'
-                            }`}
-                            style={{ width: `${Math.min((favoritesCount / 10) * 100, 100)}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">Add 10+ series for best recommendations</p>
+                      <div>
+                        <CardTitle className="text-xl">Build Your Taste Profile</CardTitle>
+                        <CardDescription>Your match power grows with every show you rate.</CardDescription>
                       </div>
                     </div>
-
-                    {/* Action & Tips */}
-                    <div className="space-y-6">
-                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
-                        <div className="flex items-start space-x-3">
-                          <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg mt-1">
-                            {favoritesCount < 5 ? (
-                              <Users className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                            ) : (
-                              <div className="w-5 h-5 bg-emerald-500 rounded-full animate-pulse" />
-                            )}
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-foreground mb-1">
-                              {favoritesCount < 5 ? 'Not ready to create watch rooms' : 'Ready to create watch rooms!'}
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              {favoritesCount < 5
-                                ? 'Add at least 5 series to unlock watch room creation'
-                                : 'Your profile is ready for AI-powered group suggestions'}
-                            </p>
-                          </div>
-                        </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">Match Power</span>
+                        <span className="text-sm text-muted-foreground">{favoritesCount}/10 rated</span>
                       </div>
-
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-foreground">Quick tips</h4>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
-                          <li className="flex items-start space-x-2">
-                            <span className="text-gray-400 mt-1">•</span>
-                            <span>Add series you actually enjoy watching</span>
-                          </li>
-                          <li className="flex items-start space-x-2">
-                            <span className="text-gray-400 mt-1">•</span>
-                            <span>Mix different genres for diverse recommendations</span>
-                          </li>
-                          <li className="flex items-start space-x-2">
-                            <span className="text-gray-400 mt-1">•</span>
-                            <span>10+ series gives the AI more to work with</span>
-                          </li>
-                        </ul>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-500 ${
+                            favoritesCount < 5 ? 'bg-amber-400' : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${Math.min((favoritesCount / 10) * 100, 100)}%` }}
+                        />
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="text-sm text-muted-foreground pt-2">
+                      <p>
+                        Rate at least <strong>10 shows</strong> to unlock the full potential of our AI recommendations.
+                      </p>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      className="w-full"
+                      onClick={() => navigate('/series')}
+                    >
+                      Rate More Shows
+                    </Button>
+                  </CardFooter>
+                </Card>
 
-              {/* Quick Actions */}
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-center">Quick Actions</h2>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <Card
-                    className="hover:shadow-lg transition-shadow cursor-pointer group border-2 hover:border-primary/50"
-                    onClick={() => navigate('/series')}
-                  >
-                    <CardHeader className="text-center">
-                      <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-red-100 dark:bg-red-900/20 rounded-full group-hover:bg-red-200 dark:group-hover:bg-red-900/30 transition-colors">
-                          <Heart className="h-8 w-8 text-red-600 dark:text-red-400" />
-                        </div>
+                {/* Card 2: Create a Room */}
+                <Card className="flex flex-col h-full border-2 transition-shadow hover:shadow-lg hover:border-primary/30">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-primary/10 rounded-full">
+                        <Users className="h-6 w-6 text-primary" />
                       </div>
-                      <CardTitle className="text-xl">My Series</CardTitle>
-                      <CardDescription className="text-base">
-                        Search, add, and manage your TV series profile for better group recommendations
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-
-                  <Card
-                    className="hover:shadow-lg transition-shadow cursor-pointer group border-2 hover:border-primary/50"
-                    onClick={() => navigate('/watchrooms')}
-                  >
-                    <CardHeader className="text-center">
-                      <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-purple-100 dark:bg-purple-900/20 rounded-full group-hover:bg-purple-200 dark:group-hover:bg-purple-900/30 transition-colors">
-                          <Users className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                        </div>
+                      <div>
+                        <CardTitle className="text-xl">Create a Watch Room</CardTitle>
+                        <CardDescription>Get AI-powered recommendations for your group.</CardDescription>
                       </div>
-                      <CardTitle className="text-xl">Create Watch Room</CardTitle>
-                      <CardDescription className="text-base">
-                        Start a room, invite friends, and get AI-powered group recommendations
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-3">
+                    <p className="text-sm font-medium text-foreground">How it works:</p>
+                    <ul className="space-y-2 text-sm text-muted-foreground list-inside">
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">1.</span>
+                        <span>
+                          <strong>Create a room</strong> and get a unique shareable link.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">2.</span>
+                        <span>
+                          <strong>Invite friends</strong> to join with their taste profiles.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-primary">3.</span>
+                        <span>
+                          <strong>Get AI matches</strong> based on everyone's favorite shows.
+                        </span>
+                      </li>
+                    </ul>
+                  </CardContent>
+                  <CardFooter className="flex flex-col items-start gap-2">
+                    <Button
+                      className="w-full"
+                      onClick={() => navigate('/watchrooms')}
+                      disabled={favoritesCount < 5}
+                      size="lg"
+                    >
+                      Create a Room
+                    </Button>
+                    {favoritesCount < 5 && (
+                      <p className="text-xs text-center w-full text-amber-600 dark:text-amber-500">
+                        You need to rate at least 5 shows to create a room.
+                      </p>
+                    )}
+                  </CardFooter>
+                </Card>
               </div>
             </div>
           ) : (
-            <div className="text-center animate-fade-in">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-6 tracking-tighter">
-                10x Series Matcher
-              </h1>
-              <p className="text-xl sm:text-2xl text-muted-foreground font-light tracking-tight max-w-4xl mx-auto mb-8">
-                Find the perfect TV series for you and your friends. Build your taste profile and get personalized
-                recommendations.
-              </p>
+            <div className="animate-fade-in space-y-20 sm:space-y-32">
+              {/* Hero Section */}
+              <div className="text-center pt-12">
+                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-6 tracking-tighter">
+                  Never argue about what to watch again
+                </h1>
+                <p className="text-lg sm:text-xl text-muted-foreground font-light tracking-tight max-w-4xl mx-auto mb-10">
+                  Find the perfect TV series for you and your friends. Rate your favorite shows, create watch rooms, and
+                  let our AI find the perfect match for your group.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/login?tab=register')}
+                    className="bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-lg hover:shadow-xl w-full sm:w-auto"
+                  >
+                    Get Started for Free
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => navigate('/login')}
+                    className="border-border hover:bg-accent w-full sm:w-auto"
+                  >
+                    Sign In
+                  </Button>
+                </div>
+              </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              {/* How It Works Section */}
+              <div className="space-y-12">
+                <div className="text-center">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-foreground">How It Works</h2>
+                  <p className="text-lg text-muted-foreground mt-3">
+                    Finding the perfect show for your group is as easy.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                  <div className="space-y-4">
+                    <div className="flex justify-center">
+                      <div className="p-4 bg-primary/10 rounded-full">
+                        <Heart className="h-8 w-8 text-primary" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold">1. Build Your Profile</h3>
+                    <p className="text-muted-foreground">Rate your favorite TV shows to create a taste profile.</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-center">
+                      <div className="p-4 bg-primary/10 rounded-full">
+                        <Users className="h-8 w-8 text-primary" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold">2. Create a Room</h3>
+                    <p className="text-muted-foreground">Start a watch room and invite your friends to join.</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-center">
+                      <div className="p-4 bg-primary/10 rounded-full">
+                        <PartyPopper className="h-8 w-8 text-primary" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold">3. Get Matches</h3>
+                    <p className="text-muted-foreground">
+                      Our AI analyzes everyone's taste and suggests the perfect show.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Features Section */}
+              <div className="space-y-12">
+                <div className="text-center">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Key Features</h2>
+                  <p className="text-lg text-muted-foreground mt-3">
+                    Everything you need to make movie night a success.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Card className="p-6 border-2">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary/10 rounded-full">
+                        <BrainCircuit className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">AI-Powered Recommendations</h3>
+                        <p className="text-muted-foreground mt-1">
+                          Leverage the power of AI to get unbiased recommendations based on your group's unique taste.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-6 border-2">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary/10 rounded-full">
+                        <Users className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">Seamless Group Collaboration</h3>
+                        <p className="text-muted-foreground mt-1">
+                          Easily invite friends and combine your taste profiles to find the perfect match for everyone.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              {/* CTA Section */}
+              <div className="text-center py-12">
+                <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+                  Ready to find your next favorite show?
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+                  Sign up for free and say goodbye to endless scrolling and debates.
+                </p>
                 <Button
                   size="lg"
                   onClick={() => navigate('/login?tab=register')}
-                  className="bg-foreground text-background hover:bg-foreground/90 transition-colors"
+                  className="bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-lg hover:shadow-xl"
                 >
-                  Get Started
+                  Get Started for Free
                 </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => navigate('/login')}
-                  className="border-border hover:bg-accent"
-                >
-                  Sign In
-                </Button>
-              </div>
-
-              {/* Decorative line */}
-              <div className="mt-12 flex justify-center">
-                <div className="h-px w-32 bg-gradient-to-r from-transparent via-border to-transparent" />
               </div>
             </div>
           )}

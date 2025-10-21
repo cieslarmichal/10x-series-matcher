@@ -86,7 +86,6 @@ export default function FavoriteSeriesList({
   if (externalLoading) {
     return (
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">My Favorite Series</h2>
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
           {[...Array(12)].map((_, i) => (
             <div
@@ -104,8 +103,6 @@ export default function FavoriteSeriesList({
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold">My Favorite Series</h2>
-
       {favorites.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <p>No favorite series yet.</p>
@@ -113,7 +110,7 @@ export default function FavoriteSeriesList({
         </div>
       ) : (
         <div className="max-h-[400px] sm:max-h-[500px] overflow-y-auto">
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 sm:gap-6">
             {favorites.map((favorite) => {
               const details = seriesDetails.get(favorite.seriesTmdbId);
               const isRemoving = removingIds.has(favorite.seriesTmdbId);
@@ -125,51 +122,38 @@ export default function FavoriteSeriesList({
                     isRemoving ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
                   }`}
                 >
-                  <div className="w-full h-48 overflow-hidden rounded-lg bg-gray-100 relative">
+                  <div className="relative w-full aspect-[2/3] overflow-hidden rounded-lg bg-muted shadow-md transition-all duration-300 group-hover:shadow-xl">
                     {details?.posterPath ? (
                       <img
-                        src={`https://image.tmdb.org/t/p/w185${details.posterPath}`}
+                        src={`https://image.tmdb.org/t/p/w342${details.posterPath}`}
                         alt={`${details.name} poster`}
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML =
-                              '<div class="w-full h-full flex items-center justify-center bg-gray-200"><span class="text-xs text-gray-500">No Image</span></div>';
-                          }
-                        }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                        <span className="text-xs text-gray-500">No Image</span>
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <span className="text-xs text-center text-muted-foreground p-2">No Image Available</span>
                       </div>
                     )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-100 group-hover:opacity-100 transition-opacity" />
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           onClick={() => handleRemoveFavorite(favorite.seriesTmdbId)}
                           variant="destructive"
                           size="icon"
-                          className="absolute top-0 right-0 w-7 h-7 bg-black hover:bg-gray-800 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 focus:opacity-100"
+                          className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-red-600 rounded-full transition-all duration-200 shadow-lg"
                           aria-label={`Remove ${details?.name || 'series'} from favorites`}
                         >
-                          <X />
+                          <X className="w-4 h-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent
-                        side="bottom"
-                        className="bg-gray-800 text-white"
-                      >
-                        Remove from favorites
-                      </TooltipContent>
+                      <TooltipContent side="bottom">Remove from favorites</TooltipContent>
                     </Tooltip>
-                  </div>
-                  <div className="mt-2">
-                    <h3 className="text-xs font-medium truncate leading-tight text-center">
-                      {details?.name || `Series ${favorite.seriesTmdbId}`}
-                    </h3>
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <h3 className="text-xs font-bold text-white truncate text-center leading-tight">
+                        {details?.name || `Series ${favorite.seriesTmdbId}`}
+                      </h3>
+                    </div>
                   </div>
                 </div>
               );

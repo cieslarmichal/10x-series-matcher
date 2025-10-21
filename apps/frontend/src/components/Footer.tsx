@@ -84,10 +84,10 @@ export default function Footer() {
               <div className="flex items-center gap-3 text-muted-foreground">
                 <Phone className="h-4 w-4" />
                 <a
-                  href="tel:+48123456789"
+                  href="tel:+48792448282"
                   className="hover:text-foreground transition-colors"
                 >
-                  +48 123 456 789
+                  +48 792 448 282
                 </a>
               </div>
               <div className="flex items-center gap-3 text-muted-foreground">
@@ -128,7 +128,7 @@ export default function Footer() {
 
       <div className="border-t border-border mt-10 pt-6 text-center max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs">
-          <span>© 2025 10x Series Matcher. All rights reserved.</span>
+          <span>© 2025 10x Series Matcher.</span>
         </div>
       </div>
     </footer>
