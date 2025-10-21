@@ -10,6 +10,7 @@ import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
 import { AddFavoriteSeriesAction } from '../application/actions/addFavoriteSeriesAction.ts';
+import { ChangePasswordAction } from '../application/actions/changePasswordAction.ts';
 import { CreateUserAction } from '../application/actions/createUserAction.ts';
 import { DeleteUserAction } from '../application/actions/deleteUserAction.ts';
 import { FindUserAction } from '../application/actions/findUserAction.ts';
@@ -86,6 +87,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   const findUserAction = new FindUserAction(userRepository);
   const deleteUserAction = new DeleteUserAction(userRepository, loggerService);
   const loginUserAction = new LoginUserAction(userRepository, loggerService, tokenService, passwordService);
+  const changePasswordAction = new ChangePasswordAction(userRepository, loggerService, passwordService);
   const refreshTokenAction = new RefreshTokenAction(
     userRepository,
     blacklistTokenRepository,
@@ -226,6 +228,33 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       if (refreshToken) {
         reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
       }
+
+      return reply.status(204).send();
+    },
+  });
+
+  fastify.patch('/users/me/password', {
+    schema: {
+      body: Type.Object({
+        oldPassword: Type.String(),
+        newPassword: Type.String(),
+      }),
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { oldPassword, newPassword } = request.body;
+
+      await changePasswordAction.execute({ userId, oldPassword, newPassword });
 
       return reply.status(204).send();
     },

@@ -47,6 +47,10 @@ export class UserRepositoryImpl implements UserRepository {
     await this.database.db.delete(users).where(eq(users.id, id));
   }
 
+  public async updatePassword(id: string, password: string): Promise<void> {
+    await this.database.db.update(users).set({ password }).where(eq(users.id, id));
+  }
+
   private mapToUser(dbUser: typeof users.$inferSelect): User {
     const user: User = {
       id: dbUser.id,

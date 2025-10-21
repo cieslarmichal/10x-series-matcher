@@ -1,17 +1,59 @@
 import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { User, Mail, Calendar, Shield, Heart } from 'lucide-react';
+import { User, Mail, Eye, EyeOff } from 'lucide-react';
 import { getMyUser } from '../api/queries/getMyUser';
 import { User as UserType } from '../api/types/user';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '../components/ui/Dialog';
+import { deleteUser } from '../api/queries/deleteUser';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Input } from '../components/ui/Input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/Form';
+import { changePassword } from '../api/queries/changePassword';
+
+const changePasswordSchema = z
+  .object({
+    oldPassword: z.string().min(1, 'Old password is required'),
+    newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export default function ProfilePage() {
-  const { userData } = useContext(AuthContext);
+  const { userData, clearUserData } = useContext(AuthContext);
   const [userDetails, setUserDetails] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
+
+  const form = useForm<z.infer<typeof changePasswordSchema>>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
 
   useEffect(() => {
     // Scroll to top when page loads
@@ -33,6 +75,36 @@ export default function ProfilePage() {
 
     loadUserDetails();
   }, []);
+
+  const handleDeleteAccount = async () => {
+    if (!user) {
+      return;
+    }
+
+    try {
+      await deleteUser(user.id);
+      toast.success('Account deleted successfully');
+      await clearUserData();
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      toast.error('Failed to delete account');
+    }
+  };
+
+  const handleChangePassword = async (values: z.infer<typeof changePasswordSchema>) => {
+    try {
+      await changePassword({
+        oldPassword: values.oldPassword,
+        newPassword: values.newPassword,
+      });
+      toast.success('Password changed successfully');
+      setIsChangePasswordDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to change password:', error);
+      toast.error('Failed to change password');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -62,10 +134,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  const accountAge = user.createdAt
-    ? Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))
-    : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,39 +167,6 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">Member for</p>
-                      <p className="text-sm text-muted-foreground">
-                        {accountAge} {accountAge === 1 ? 'day' : 'days'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">Account Status</p>
-                      <Badge
-                        variant="secondary"
-                        className="mt-1"
-                      >
-                        Active
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Heart className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">Series Preferences</p>
-                      <p className="text-sm text-muted-foreground">Manage your favorites</p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </CardContent>
@@ -144,7 +179,7 @@ export default function ProfilePage() {
               <CardDescription>Your activity on 10x Series Matcher</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">0</div>
                   <p className="text-sm text-muted-foreground">Favorite Series</p>
@@ -156,10 +191,6 @@ export default function ProfilePage() {
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">0</div>
                   <p className="text-sm text-muted-foreground">Recommendations</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">{accountAge}</div>
-                  <p className="text-sm text-muted-foreground">Days Active</p>
                 </div>
               </div>
             </CardContent>
@@ -173,24 +204,172 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1"
+                <Dialog
+                  open={isChangePasswordDialogOpen}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      form.reset();
+                    }
+                    setIsChangePasswordDialogOpen(open);
+                  }}
                 >
-                  Change Password
-                </Button>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Change Password
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Change Password</DialogTitle>
+                    </DialogHeader>
+                    <Form {...form}>
+                      <form
+                        onSubmit={form.handleSubmit(handleChangePassword)}
+                        className="space-y-4"
+                      >
+                        <FormField
+                          control={form.control}
+                          name="oldPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Old Password</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    type={showOldPassword ? 'text' : 'password'}
+                                    {...field}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                                    onClick={() => setShowOldPassword(!showOldPassword)}
+                                    tabIndex={-1}
+                                  >
+                                    {showOldPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-destructive" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="newPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>New Password</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    type={showNewPassword ? 'text' : 'password'}
+                                    {...field}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    tabIndex={-1}
+                                  >
+                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-destructive" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Confirm New Password</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    {...field}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    tabIndex={-1}
+                                  >
+                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-destructive" />
+                            </FormItem>
+                          )}
+                        />
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                            >
+                              Cancel
+                            </Button>
+                          </DialogClose>
+                          <Button
+                            type="submit"
+                            disabled={form.formState.isSubmitting}
+                          >
+                            {form.formState.isSubmitting ? 'Changing...' : 'Change Password'}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
                 <Button
                   variant="outline"
                   className="flex-1"
                 >
                   Download Data
                 </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Delete Account
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Delete Account
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Are you absolutely sure?</DialogTitle>
+                      <DialogDescription>
+                        This action cannot be undone. This will permanently delete your account and remove your data
+                        from our servers.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <Button
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                      >
+                        Delete
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
               <hr className="border-border" />
               <div className="text-sm text-muted-foreground">
