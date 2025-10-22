@@ -37,8 +37,8 @@ export const userFavoriteSeries = pgTable(
   ],
 );
 
-export const rooms = pgTable(
-  'rooms',
+export const watchrooms = pgTable(
+  'watchrooms',
   {
     id: uuid('id').primaryKey(),
     name: varchar('name', { length: 64 }).notNull(),
@@ -46,26 +46,27 @@ export const rooms = pgTable(
     ownerId: uuid('owner_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    publicLinkId: varchar('public_link_id', { length: 21 }).unique(),
+    publicLinkId: varchar('public_link_id', { length: 21 }).notNull().unique(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
   },
-  (table) => [index('idx_rooms_owner_id').on(table.ownerId)],
+  (table) => [index('idx_watchrooms_owner_id').on(table.ownerId)],
 );
 
-export const roomParticipants = pgTable(
-  'room_participants',
+export const watchroomParticipants = pgTable(
+  'watchroom_participants',
   {
     id: uuid('id').primaryKey(),
-    roomId: uuid('room_id')
+    watchroomId: uuid('watchroom_id')
       .notNull()
-      .references(() => rooms.id, { onDelete: 'cascade' }),
+      .references(() => watchrooms.id, { onDelete: 'cascade' }),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
   },
   (table) => [
-    index('idx_room_participants_room_id').on(table.roomId),
-    index('idx_room_participants_user_id').on(table.userId),
-    index('idx_room_participants_room_user').on(table.roomId, table.userId),
+    index('idx_watchroom_participants_watchroom_id').on(table.watchroomId),
+    index('idx_watchroom_participants_user_id').on(table.userId),
+    index('idx_watchroom_participants_watchroom_user').on(table.watchroomId, table.userId),
   ],
 );
 
@@ -73,14 +74,14 @@ export const recommendations = pgTable(
   'recommendations',
   {
     id: uuid('id').primaryKey(),
-    roomId: uuid('room_id')
+    watchroomId: uuid('watchroom_id')
       .notNull()
-      .references(() => rooms.id, { onDelete: 'cascade' }),
+      .references(() => watchrooms.id, { onDelete: 'cascade' }),
     seriesTmdbId: integer('series_tmdb_id').notNull(),
     justification: text('justification').notNull(),
   },
   (table) => [
-    index('idx_recommendations_room_id').on(table.roomId),
+    index('idx_recommendations_watchroom_id').on(table.watchroomId),
     index('idx_recommendations_series_tmdb_id').on(table.seriesTmdbId),
   ],
 );

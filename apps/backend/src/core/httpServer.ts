@@ -21,6 +21,7 @@ import { type LoggerService } from '../common/logger/loggerService.ts';
 import type { Database } from '../infrastructure/database/database.ts';
 import { seriesRoutes } from '../modules/series/routes/seriesRoutes.ts';
 import { userRoutes } from '../modules/user/routes/userRoutes.ts';
+import { watchroomRoutes } from '../modules/watchroom/routes/watchroomRoutes.ts';
 
 import { type Config } from './config.ts';
 
@@ -247,6 +248,12 @@ export class HttpServer {
       config: this.config,
       loggerService: this.loggerService,
       tokenService,
+    });
+
+    await this.fastifyServer.register(watchroomRoutes, {
+      database: this.database,
+      tokenService,
+      loggerService: this.loggerService,
     });
 
     this.fastifyServer.get('/health', async (_request, reply) => {

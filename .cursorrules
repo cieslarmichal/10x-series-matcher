@@ -29,6 +29,9 @@ rules:
     database:
       - Use Drizzle ORM only, no raw SQL unless strictly necessary
       - Prefer typed queries and inferred return types
+      - Use Drizzle migrations to apply changes to the database
+      - Use UUIDs for primary keys
+      - Use snake_case for table and column names
     transactions:
       - Use Drizzle's transaction API (`db.transaction(async (tx) => { ... })`)
       - Group multi-step write operations into single transactions

@@ -1,0 +1,136 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { z } from 'zod';
+import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/Button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/Dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/Form';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { createWatchroom } from '../api/queries/watchroom';
+
+const formSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(64, 'Name must be at most 64 characters'),
+  description: z.string().max(256, 'Description must be at most 256 characters').optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+interface CreateWatchRoomModalProps {
+  onRoomCreated: () => void;
+}
+
+export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProps) {
+  const [open, setOpen] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+  });
+
+  async function onSubmit(values: FormValues) {
+    try {
+      await createWatchroom({
+        name: values.name,
+        description: values.description || undefined,
+      });
+
+      toast.success('Watch room created successfully!');
+      setOpen(false);
+      form.reset();
+      onRoomCreated();
+    } catch (error) {
+      toast.error('Failed to create watch room. Please try again.');
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Room
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Watch Room</DialogTitle>
+          <DialogDescription>
+            Create a new room to get AI-powered series recommendations with your friends.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Room Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Weekend Movie Night"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Looking for a great series to watch together..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? 'Creating...' : 'Create Room'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -1,40 +1,44 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { Users, Plus, Copy, ExternalLink } from 'lucide-react';
+import { Users, Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface WatchRoom {
-  id: string;
-  name: string;
-  participants: number;
-  createdAt: string;
-}
+import { getMyWatchrooms } from '../api/queries/watchroom';
+import type { WatchroomWithParticipantCount } from '../api/types/watchroom';
+import { CreateWatchRoomModal } from '../components/CreateWatchRoomModal';
 
 export default function WatchRoomsPage() {
-  const [rooms] = useState<WatchRoom[]>([]); // This would be loaded from API
+  const [rooms, setRooms] = useState<WatchroomWithParticipantCount[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Scroll to top when page loads
     window.scrollTo(0, 0);
+    fetchRooms();
   }, []);
 
-  const handleCreateRoom = () => {
-    // TODO: Implement room creation
-    toast.info('Room creation will be implemented soon!');
+  const fetchRooms = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedRooms = await getMyWatchrooms();
+      setRooms(fetchedRooms);
+    } catch (error) {
+      toast.error('Failed to fetch watchrooms.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCopyLink = (roomId: string) => {
-    // TODO: Copy room link to clipboard
-    const link = `${window.location.origin}/room/${roomId}`;
+  const handleCopyLink = (publicLinkId: string) => {
+    const link = `${window.location.origin}/room/${publicLinkId}`;
     navigator.clipboard.writeText(link);
     toast.success('Room link copied to clipboard!');
   };
 
-  const handleJoinRoom = (_roomId: string) => {
-    // TODO: Navigate to room
-    toast.info('Room joining will be implemented soon!');
+  const handleJoinRoom = (roomId: string) => {
+    navigate(`/watchrooms/${roomId}`);
   };
 
   return (
@@ -48,52 +52,12 @@ export default function WatchRoomsPage() {
                 Create rooms and invite friends to get AI-powered series recommendations
               </p>
             </div>
-            <Button
-              onClick={handleCreateRoom}
-              className="w-full sm:w-auto"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create New Room
-            </Button>
+            <CreateWatchRoomModal onRoomCreated={fetchRooms} />
           </div>
 
-          {/* Coming Soon Section */}
-          <Card className="border-dashed border-2">
-            <CardHeader className="text-center">
-              <CardTitle className="text-xl">🎬 Watch Rooms Coming Soon</CardTitle>
-              <CardDescription>This feature is under development. Soon you'll be able to:</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div className="space-y-2">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                    <Plus className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold">Create Rooms</h3>
-                  <p className="text-sm text-muted-foreground">Start a new watch room and invite your friends</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                    <Users className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold">Group Preferences</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Combine everyone's favorite series for perfect matches
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                    <Copy className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold">AI Recommendations</h3>
-                  <p className="text-sm text-muted-foreground">Get personalized suggestions based on group tastes</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {isLoading && <p>Loading...</p>}
 
-          {/* Placeholder for existing rooms */}
-          {rooms.length === 0 && (
+          {!isLoading && rooms.length === 0 && (
             <div className="text-center py-12">
               <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-muted-foreground">No watch rooms yet</h3>
@@ -103,8 +67,7 @@ export default function WatchRoomsPage() {
             </div>
           )}
 
-          {/* Placeholder for future room list */}
-          {rooms.length > 0 && (
+          {!isLoading && rooms.length > 0 && (
             <div className="grid gap-4">
               {rooms.map((room) => (
                 <Card key={room.id}>
@@ -113,7 +76,7 @@ export default function WatchRoomsPage() {
                       <CardTitle className="text-lg">{room.name}</CardTitle>
                       <Badge variant="secondary">
                         <Users className="w-3 h-3 mr-1" />
-                        {room.participants} participants
+                        {room.participantCount} participants
                       </Badge>
                     </div>
                     <CardDescription>Created {new Date(room.createdAt).toLocaleDateString()}</CardDescription>
@@ -123,7 +86,7 @@ export default function WatchRoomsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleCopyLink(room.id)}
+                        onClick={() => handleCopyLink(room.publicLinkId)}
                       >
                         <Copy className="w-4 h-4 mr-2" />
                         Copy Link
