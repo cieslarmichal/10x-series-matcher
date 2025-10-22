@@ -100,6 +100,7 @@ export default function HomePage() {
                   <CardFooter>
                     <Button
                       className="w-full"
+                      size="lg"
                       onClick={() => navigate('/series')}
                     >
                       Rate More Shows
@@ -144,6 +145,11 @@ export default function HomePage() {
                     </ul>
                   </CardContent>
                   <CardFooter className="flex flex-col items-start gap-2">
+                    {favoritesCount < 5 && (
+                      <p className="text-xs text-center w-full text-amber-600 dark:text-amber-500">
+                        You need to rate at least 5 shows to create a room.
+                      </p>
+                    )}
                     <Button
                       className="w-full"
                       onClick={() => navigate('/watchrooms')}
@@ -152,11 +158,6 @@ export default function HomePage() {
                     >
                       Create a Room
                     </Button>
-                    {favoritesCount < 5 && (
-                      <p className="text-xs text-center w-full text-amber-600 dark:text-amber-500">
-                        You need to rate at least 5 shows to create a room.
-                      </p>
-                    )}
                   </CardFooter>
                 </Card>
               </div>
