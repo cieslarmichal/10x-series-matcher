@@ -2,6 +2,7 @@ import { Type, type Static, type FastifyPluginAsyncTypebox } from '@fastify/type
 
 import { createAuthenticationMiddleware } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
+import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
 import { CreateWatchroomAction } from '../application/actions/createWatchroomAction.ts';
@@ -12,10 +13,13 @@ import { JoinWatchroomAction } from '../application/actions/joinWatchroomAction.
 import type { Watchroom } from '../domain/types/watchroom.ts';
 import { WatchroomRepositoryImpl } from '../infrastructure/repositories/watchroomRepositoryImpl.ts';
 
+const watchroomNameSchema = Type.String({ minLength: 1, maxLength: 64 });
+const watchroomDescriptionSchema = Type.Optional(Type.String({ maxLength: 256 }));
+
 const watchroomSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
-  name: Type.String(),
-  description: Type.Union([Type.String(), Type.Null()]),
+  name: watchroomNameSchema,
+  description: watchroomDescriptionSchema,
   ownerId: Type.String({ format: 'uuid' }),
   publicLinkId: Type.String(),
   createdAt: Type.String({ format: 'date-time' }),
@@ -41,8 +45,8 @@ const watchroomWithParticipantCountSchema = Type.Intersect([
 ]);
 
 const publicWatchroomDetailsSchema = Type.Object({
-  name: Type.String(),
-  description: Type.Union([Type.String(), Type.Null()]),
+  name: watchroomNameSchema,
+  description: watchroomDescriptionSchema,
   ownerName: Type.String(),
   participantCount: Type.Number(),
 });
@@ -64,20 +68,41 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
 
-  const mapWatchroomToResponse = (watchroom: Watchroom): Static<typeof watchroomSchema> => ({
-    id: watchroom.id,
-    name: watchroom.name,
-    description: watchroom.description ?? null,
-    ownerId: watchroom.ownerId,
-    publicLinkId: watchroom.publicLinkId,
-    createdAt: watchroom.createdAt.toISOString(),
-  });
+  const mapWatchroomToResponse = (watchroom: Watchroom): Static<typeof watchroomSchema> => {
+    const response: Static<typeof watchroomSchema> = {
+      id: watchroom.id,
+      name: watchroom.name,
+      ownerId: watchroom.ownerId,
+      publicLinkId: watchroom.publicLinkId,
+      createdAt: watchroom.createdAt.toISOString(),
+    };
+
+    if (watchroom.description) {
+      response.description = watchroom.description;
+    }
+
+    return response;
+  };
+
+  const mapPublicWatchroomToResponse = (watchroom: Watchroom): Static<typeof publicWatchroomDetailsSchema> => {
+    const response: Static<typeof publicWatchroomDetailsSchema> = {
+      name: watchroom.name,
+      ownerName: watchroom.ownerName,
+      participantCount: watchroom.participants.length,
+    };
+
+    if (watchroom.description) {
+      response.description = watchroom.description;
+    }
+
+    return response;
+  };
 
   fastify.post('/watchrooms', {
     schema: {
       body: Type.Object({
-        name: Type.String({ minLength: 1, maxLength: 64 }),
-        description: Type.Optional(Type.String({ maxLength: 256 })),
+        name: watchroomNameSchema,
+        description: watchroomDescriptionSchema,
       }),
       response: {
         201: watchroomSchema,
@@ -85,7 +110,13 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const userId = request.user.userId;
       const { name, description } = request.body;
 
       const watchroom = await createWatchroomAction.execute({
@@ -106,7 +137,13 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const userId = request.user.userId;
 
       const watchrooms: Watchroom[] = await findUserWatchroomsAction.execute(userId);
 
@@ -133,12 +170,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
 
       const watchroom: Watchroom = await findPublicWatchroomDetailsAction.execute(publicLinkId);
 
-      return reply.send({
-        name: watchroom.name,
-        description: watchroom.description ?? null,
-        ownerName: watchroom.ownerName,
-        participantCount: watchroom.participants.length,
-      });
+      return reply.send(mapPublicWatchroomToResponse(watchroom));
     },
   });
 
