@@ -100,51 +100,53 @@ export default function WatchRoomsPage() {
                   return (
                     <Card
                       key={room.id}
-                      className="flex flex-col hover:shadow-lg transition-shadow duration-300"
+                      className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200 group"
                     >
-                      <CardHeader>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0 space-y-2.5">
-                            <CardTitle className="text-xl line-clamp-1">{room.name}</CardTitle>
-                            <div className="flex items-center flex-wrap gap-2 text-sm text-muted-foreground">
-                              <Badge
-                                variant="secondary"
-                                className="shrink-0"
-                              >
-                                <Users className="w-3 h-3 mr-1.5" />
-                                {room.participants.length} Member
-                                {room.participants.length > 1 && 's'}
-                              </Badge>
-                              {isOwner && (
-                                <Badge
-                                  variant="outline"
-                                  className="shrink-0"
-                                >
-                                  Owner
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center text-xs text-muted-foreground">
-                              <Calendar className="w-3 h-3 mr-1.5 shrink-0" />
-                              <span>
-                                {new Date(room.createdAt).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                })}
-                              </span>
-                            </div>
-                          </div>
+                      <CardHeader className="px-6 pb-4">
+                        <CardTitle className="text-xl font-semibold line-clamp-1 mb-3">{room.name}</CardTitle>
+                        <div className="flex items-center flex-wrap gap-2 mb-2">
+                          <Badge
+                            variant="secondary"
+                            className="shrink-0 text-xs bg-secondary/50"
+                          >
+                            <Users className="w-3 h-3 mr-1.5" />
+                            {room.participants.length} Member
+                            {room.participants.length > 1 && 's'}
+                          </Badge>
+                          {isOwner && (
+                            <Badge
+                              variant="outline"
+                              className="shrink-0 text-xs border-muted-foreground/30"
+                            >
+                              Owner
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center text-xs text-muted-foreground/60">
+                          <Calendar className="w-3 h-3 mr-1.5 shrink-0" />
+                          <span>
+                            {new Date(room.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </span>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex-grow pb-6">
+
+                      <CardContent className="flex-grow px-6 py-4">
                         {room.description ? (
-                          <CardDescription className="line-clamp-2">{room.description}</CardDescription>
+                          <CardDescription className="line-clamp-2 text-sm leading-relaxed">
+                            {room.description}
+                          </CardDescription>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic">No description provided.</p>
+                          <p className="text-sm text-muted-foreground/50 italic">
+                            This room doesn't have a description yet.
+                          </p>
                         )}
                       </CardContent>
-                      <CardFooter className="pt-0">
+
+                      <CardFooter className="px-6 py-4 pt-0">
                         <div className="w-full flex items-center gap-2">
                           <Button
                             size="sm"
