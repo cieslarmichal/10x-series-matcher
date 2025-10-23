@@ -11,10 +11,9 @@ import LogoutPage from './pages/LogoutPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
 import SeriesPage from './pages/Series.tsx';
 import WatchRoomsPage from './pages/WatchRooms.tsx';
-import AboutPage from './pages/About.tsx';
 import ProfilePage from './pages/Profile.tsx';
-import JoinRoomPage from './pages/JoinRoomPage.tsx';
-import RoomPage from './pages/RoomPage.tsx';
+import JoinWatchRoomPage from './pages/JoinWatchRoomPage.tsx';
+import RoomPage from './pages/WatchRoomPage.tsx';
 
 const router = createBrowserRouter([
   {
@@ -62,12 +61,8 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: '/room/:publicLinkId',
-        element: <JoinRoomPage />,
-      },
-      {
-        path: '/about',
-        element: <AboutPage />,
+        path: '/watchrooms/public/:publicLinkId',
+        element: <JoinWatchRoomPage />,
       },
       {
         path: '/my-profile',

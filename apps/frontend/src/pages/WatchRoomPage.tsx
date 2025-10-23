@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Copy, Users, ArrowLeft, UserMinus, LogOut, Sparkles, TvMinimalPlay, Trash2, Calendar } from 'lucide-react';
 
-import { AuthContext } from '../context/AuthContext';
-import { getWatchroomDetails, removeParticipant, leaveWatchroom, deleteWatchroom } from '../api/queries/watchroom';
-import type { WatchroomDetails } from '../api/types/watchroom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
+import { AuthContext } from '../context/AuthContext.tsx';
+import { getWatchroomDetails, removeParticipant, leaveWatchroom, deleteWatchroom } from '../api/queries/watchroom.ts';
+import type { WatchroomDetails } from '../api/types/watchroom.ts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card.tsx';
+import { Button } from '../components/ui/Button.tsx';
+import { Badge } from '../components/ui/Badge.tsx';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/Dialog';
+} from '../components/ui/Dialog.tsx';
 
 export default function RoomPage() {
   const { watchroomId } = useParams<{ watchroomId: string }>();
@@ -57,7 +57,7 @@ export default function RoomPage() {
 
   const handleCopyLink = () => {
     if (room) {
-      const link = `${window.location.origin}/room/${room.publicLinkId}`;
+      const link = `${window.location.origin}/watchrooms/public/${room.publicLinkId}`;
       navigator.clipboard.writeText(link);
       toast.success('Room link copied to clipboard!');
     }

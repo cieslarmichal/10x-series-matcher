@@ -3,13 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Users, UserPlus, Sparkles } from 'lucide-react';
 
-import { AuthContext } from '../context/AuthContext';
-import { getPublicWatchroomDetails, joinWatchroom } from '../api/queries/watchroom';
-import type { Watchroom } from '../api/types/watchroom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
+import { AuthContext } from '../context/AuthContext.tsx';
+import { getPublicWatchroomDetails, joinWatchroom } from '../api/queries/watchroom.ts';
+import type { Watchroom } from '../api/types/watchroom.ts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card.tsx';
+import { Button } from '../components/ui/Button.tsx';
 
-export default function JoinRoomPage() {
+export default function JoinWatchRoomPage() {
   const { publicLinkId } = useParams<{ publicLinkId: string }>();
   const [room, setRoom] = useState<Watchroom | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +42,7 @@ export default function JoinRoomPage() {
     }
 
     if (!userData) {
-      navigate(`/login?redirect=/room/${publicLinkId}`);
+      navigate(`/login?redirect=/watchrooms/public/${publicLinkId}`);
       return;
     }
 
@@ -101,6 +101,7 @@ export default function JoinRoomPage() {
   const ownerParticipant = room.participants.find((p) => p.id === room.ownerId);
   const ownerName = ownerParticipant?.name || 'Unknown';
   const participantCount = room.participants.length;
+  const isAlreadyParticipant = userData ? room.participants.some((p) => p.id === userData.id) : false;
 
   return (
     <div className="min-h-screen bg-background flex items-start justify-center p-4 py-12 md:py-16">
@@ -134,11 +135,18 @@ export default function JoinRoomPage() {
           </div>
 
           <div className="pt-2">
+            {isAlreadyParticipant && (
+              <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <p className="text-sm text-center text-primary font-medium">
+                  You are already a member of this watch room
+                </p>
+              </div>
+            )}
             <Button
               onClick={handleJoin}
               className="w-full h-12 text-base font-semibold"
               size="lg"
-              disabled={isJoining}
+              disabled={isJoining || isAlreadyParticipant}
             >
               {isJoining ? (
                 <>

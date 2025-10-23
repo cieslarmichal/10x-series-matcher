@@ -41,12 +41,12 @@ export default function WatchRoomsPage() {
   }, [page]);
 
   const handleCopyLink = (publicLinkId: string) => {
-    const link = `${window.location.origin}/room/${publicLinkId}`;
+    const link = `${window.location.origin}/watchrooms/public/${publicLinkId}`;
     navigator.clipboard.writeText(link);
     toast.success('Room link copied to clipboard!');
   };
 
-  const handleJoinRoom = (roomId: string) => {
+  const handleOpenWatchRoom = (roomId: string) => {
     navigate(`/watchrooms/${roomId}`);
   };
 
@@ -152,7 +152,7 @@ export default function WatchRoomsPage() {
                           </Button>
                           <Button
                             size="sm"
-                            onClick={() => handleJoinRoom(room.id)}
+                            onClick={() => handleOpenWatchRoom(room.id)}
                             className="flex-1 sm:flex-initial"
                           >
                             Open Room

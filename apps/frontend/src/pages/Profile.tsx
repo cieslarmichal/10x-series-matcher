@@ -7,6 +7,8 @@ import { User, Mail, Eye, EyeOff } from 'lucide-react';
 import { getMyUser } from '../api/queries/getMyUser';
 import { User as UserType } from '../api/types/user';
 import { toast } from 'sonner';
+import { getMyFavoriteSeries } from '../api/queries/getMyFavoriteSeries';
+import { getMyWatchrooms } from '../api/queries/watchroom';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +46,8 @@ export default function ProfilePage() {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [favoriteSeriesCount, setFavoriteSeriesCount] = useState<number>(0);
+  const [watchRoomsCount, setWatchRoomsCount] = useState<number>(0);
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof changePasswordSchema>>({
@@ -63,8 +67,14 @@ export default function ProfilePage() {
   useEffect(() => {
     const loadUserDetails = async () => {
       try {
-        const user = await getMyUser();
+        const [user, favoriteSeries, watchrooms] = await Promise.all([
+          getMyUser(),
+          getMyFavoriteSeries(1, 1),
+          getMyWatchrooms(1, 1),
+        ]);
         setUserDetails(user);
+        setFavoriteSeriesCount(favoriteSeries.metadata.total);
+        setWatchRoomsCount(watchrooms.metadata.total);
       } catch (error) {
         console.error('Failed to load user details:', error);
         toast.error('Failed to load profile information');
@@ -181,11 +191,11 @@ export default function ProfilePage() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">0</div>
+                  <div className="text-2xl font-bold text-primary">{favoriteSeriesCount}</div>
                   <p className="text-sm text-muted-foreground">Favorite Series</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">0</div>
+                  <div className="text-2xl font-bold text-primary">{watchRoomsCount}</div>
                   <p className="text-sm text-muted-foreground">Watch Rooms</p>
                 </div>
                 <div className="text-center">

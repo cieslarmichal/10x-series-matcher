@@ -6,14 +6,7 @@ import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/Button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/Dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/Form';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -72,9 +65,6 @@ export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProp
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Watch Room</DialogTitle>
-          <DialogDescription>
-            Create a new room to get AI-powered series recommendations with your friends.
-          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form
