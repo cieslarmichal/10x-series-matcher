@@ -4,12 +4,8 @@ import { UuidService } from '../../../../common/uuid/uuidService.ts';
 import type { Database } from '../../../../infrastructure/database/database.ts';
 import { users, watchroomParticipants, watchrooms } from '../../../../infrastructure/database/schema.ts';
 import type {
-  AddParticipantData,
   CreateWatchroomData,
   FindWatchroomParams,
-  FindWatchroomsParams,
-  IsParticipantData,
-  RemoveParticipantData,
   WatchroomRepository,
 } from '../../domain/repositories/watchroomRepository.ts';
 import type { Watchroom } from '../../domain/types/watchroom.ts';
@@ -107,28 +103,17 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
     return this.mapToWatchroom(watchroomData, participants);
   }
 
-  public async findMany(params: FindWatchroomsParams): Promise<{ watchrooms: Watchroom[]; total: number }> {
-    const page = params.page ?? 1;
-    const limit = params.limit ?? 20;
-    const offset = (page - 1) * limit;
-
+  public async findMany(userId: string, page: number, pageSize: number): Promise<Watchroom[]> {
     const userWatchroomIds = await this.database.db
       .select({ watchroomId: watchroomParticipants.watchroomId })
       .from(watchroomParticipants)
-      .where(eq(watchroomParticipants.userId, params.ownerId));
+      .where(eq(watchroomParticipants.userId, userId));
 
     if (userWatchroomIds.length === 0) {
-      return { watchrooms: [], total: 0 };
+      return [];
     }
 
     const watchroomIds = userWatchroomIds.map((w) => w.watchroomId);
-
-    const [countResult] = await this.database.db
-      .select({ count: count() })
-      .from(watchrooms)
-      .where(inArray(watchrooms.id, watchroomIds));
-
-    const total = countResult?.count ?? 0;
 
     const watchroomsData = await this.database.db
       .select({
@@ -143,11 +128,11 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       .from(watchrooms)
       .innerJoin(users, eq(watchrooms.ownerId, users.id))
       .where(inArray(watchrooms.id, watchroomIds))
-      .limit(limit)
-      .offset(offset);
+      .limit(pageSize)
+      .offset(pageSize * (page - 1));
 
     if (watchroomsData.length === 0) {
-      return { watchrooms: [], total };
+      return [];
     }
 
     const paginatedWatchroomIds = watchroomsData.map((w) => w.id);
@@ -166,32 +151,37 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
 
     const watchroomsResult = watchroomsData.map((w) => this.mapToWatchroom(w, participantsByWatchroom.get(w.id) ?? []));
 
-    return { watchrooms: watchroomsResult, total };
+    return watchroomsResult;
   }
 
-  public async addParticipant(data: AddParticipantData): Promise<void> {
+  public async count(userId: string): Promise<number> {
+    const [countResult] = await this.database.db
+      .select({ count: count() })
+      .from(watchroomParticipants)
+      .where(eq(watchroomParticipants.userId, userId));
+
+    return countResult?.count ?? 0;
+  }
+
+  public async addParticipant(watchroomId: string, userId: string): Promise<void> {
     await this.database.db.insert(watchroomParticipants).values({
       id: UuidService.generateUuid(),
-      watchroomId: data.watchroomId,
-      userId: data.userId,
+      watchroomId,
+      userId,
     });
   }
 
-  public async removeParticipant(data: RemoveParticipantData): Promise<void> {
+  public async removeParticipant(watchroomId: string, userId: string): Promise<void> {
     await this.database.db
       .delete(watchroomParticipants)
-      .where(
-        and(eq(watchroomParticipants.watchroomId, data.watchroomId), eq(watchroomParticipants.userId, data.userId)),
-      );
+      .where(and(eq(watchroomParticipants.watchroomId, watchroomId), eq(watchroomParticipants.userId, userId)));
   }
 
-  public async isParticipant(data: IsParticipantData): Promise<boolean> {
+  public async isParticipant(watchroomId: string, userId: string): Promise<boolean> {
     const [participant] = await this.database.db
       .select()
       .from(watchroomParticipants)
-      .where(
-        and(eq(watchroomParticipants.watchroomId, data.watchroomId), eq(watchroomParticipants.userId, data.userId)),
-      )
+      .where(and(eq(watchroomParticipants.watchroomId, watchroomId), eq(watchroomParticipants.userId, userId)))
       .limit(1);
 
     return !!participant;

@@ -1,6 +1,17 @@
 import type { FavoriteSeriesRepository } from '../../domain/repositories/favoriteSeriesRepository.ts';
 import type { FavoriteSeries } from '../../domain/types/favoriteSeries.ts';
 
+export interface GetUserFavoriteSeriesPayload {
+  readonly userId: string;
+  readonly page: number;
+  readonly pageSize: number;
+}
+
+export interface GetUserFavoriteSeriesResult {
+  readonly data: FavoriteSeries[];
+  readonly total: number;
+}
+
 export class GetUserFavoriteSeriesAction {
   private readonly favoriteSeriesRepository: FavoriteSeriesRepository;
 
@@ -8,11 +19,17 @@ export class GetUserFavoriteSeriesAction {
     this.favoriteSeriesRepository = favoriteSeriesRepository;
   }
 
-  public async execute(
-    userId: string,
-    page: number = 1,
-    limit: number = 20,
-  ): Promise<{ favorites: FavoriteSeries[]; total: number }> {
-    return this.favoriteSeriesRepository.findByUserId(userId, page, limit);
+  public async execute(payload: GetUserFavoriteSeriesPayload): Promise<GetUserFavoriteSeriesResult> {
+    const { userId, page, pageSize } = payload;
+
+    const [favorites, total] = await Promise.all([
+      this.favoriteSeriesRepository.findMany(userId, page, pageSize),
+      this.favoriteSeriesRepository.count(userId),
+    ]);
+
+    return {
+      data: favorites,
+      total,
+    };
   }
 }

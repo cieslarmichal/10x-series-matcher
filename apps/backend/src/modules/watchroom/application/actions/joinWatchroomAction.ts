@@ -36,7 +36,7 @@ export class JoinWatchroomAction {
       });
     }
 
-    const isParticipant = await this.watchroomRepository.isParticipant({ watchroomId: watchroom.id, userId });
+    const isParticipant = await this.watchroomRepository.isParticipant(watchroom.id, userId);
 
     if (isParticipant) {
       throw new ResourceAlreadyExistsError({
@@ -47,7 +47,7 @@ export class JoinWatchroomAction {
       });
     }
 
-    await this.watchroomRepository.addParticipant({ watchroomId: watchroom.id, userId });
+    await this.watchroomRepository.addParticipant(watchroom.id, userId);
 
     this.loggerService.info({
       message: 'Watchroom joined successfully.',

@@ -3,17 +3,13 @@ import type { Watchroom } from '../../domain/types/watchroom.ts';
 
 export interface FindUserWatchroomsActionPayload {
   readonly userId: string;
-  readonly page?: number;
-  readonly pageSize?: number;
+  readonly page: number;
+  readonly pageSize: number;
 }
 
 export interface FindUserWatchroomsActionResult {
   readonly data: Watchroom[];
-  readonly metadata: {
-    readonly page: number;
-    readonly pageSize: number;
-    readonly total: number;
-  };
+  readonly total: number;
 }
 
 export class FindUserWatchroomsAction {
@@ -24,22 +20,13 @@ export class FindUserWatchroomsAction {
   }
 
   public async execute(payload: FindUserWatchroomsActionPayload): Promise<FindUserWatchroomsActionResult> {
-    const page = payload.page ?? 1;
-    const pageSize = payload.pageSize ?? 20;
+    const { userId, page, pageSize } = payload;
 
-    const { watchrooms, total } = await this.watchroomRepository.findMany({
-      ownerId: payload.userId,
-      page,
-      limit: pageSize,
-    });
+    const [watchrooms, total] = await Promise.all([
+      this.watchroomRepository.findMany(userId, page, pageSize),
+      this.watchroomRepository.count(userId),
+    ]);
 
-    return {
-      data: watchrooms,
-      metadata: {
-        page,
-        pageSize,
-        total,
-      },
-    };
+    return { data: watchrooms, total };
   }
 }

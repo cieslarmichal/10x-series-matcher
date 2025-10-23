@@ -33,35 +33,28 @@ export class FavoriteSeriesRepositoryImpl implements FavoriteSeriesRepository {
     return this.mapToFavoriteSeries(newFavorite);
   }
 
-  public async findByUserId(
-    userId: string,
-    page: number = 1,
-    limit: number = 20,
-  ): Promise<{ favorites: FavoriteSeries[]; total: number }> {
-    const offset = (page - 1) * limit;
-
+  public async count(userId: string): Promise<number> {
     const [countResult] = await this.database.db
       .select({ count: this.database.db.$count(userFavoriteSeries) })
       .from(userFavoriteSeries)
       .where(eq(userFavoriteSeries.userId, userId));
 
-    const total = countResult?.count ?? 0;
+    return countResult?.count ?? 0;
+  }
 
+  public async findMany(userId: string, page: number, pageSize: number): Promise<FavoriteSeries[]> {
     const favorites = await this.database.db
       .select()
       .from(userFavoriteSeries)
       .where(eq(userFavoriteSeries.userId, userId))
       .orderBy(desc(userFavoriteSeries.id))
-      .limit(limit)
-      .offset(offset);
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
 
-    return {
-      favorites: favorites.map(this.mapToFavoriteSeries),
-      total,
-    };
+    return favorites.map(this.mapToFavoriteSeries);
   }
 
-  public async findByUserIdAndSeriesTmdbId(userId: string, seriesTmdbId: number): Promise<FavoriteSeries | null> {
+  public async findOne(userId: string, seriesTmdbId: number): Promise<FavoriteSeries | null> {
     const [favorite] = await this.database.db
       .select()
       .from(userFavoriteSeries)

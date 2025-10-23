@@ -9,8 +9,7 @@ export class RemoveFavoriteSeriesAction {
   }
 
   public async execute(userId: string, seriesTmdbId: number): Promise<void> {
-    // Check if exists
-    const existing = await this.favoriteSeriesRepository.findByUserIdAndSeriesTmdbId(userId, seriesTmdbId);
+    const existing = await this.favoriteSeriesRepository.findOne(userId, seriesTmdbId);
 
     if (!existing) {
       throw new ResourceNotFoundError({

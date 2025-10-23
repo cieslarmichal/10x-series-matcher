@@ -43,7 +43,7 @@ export class LeaveWatchroomAction {
       });
     }
 
-    const isParticipant = await this.watchroomRepository.isParticipant({ watchroomId, userId });
+    const isParticipant = await this.watchroomRepository.isParticipant(watchroomId, userId);
 
     if (!isParticipant) {
       throw new ResourceNotFoundError({
@@ -52,7 +52,7 @@ export class LeaveWatchroomAction {
       });
     }
 
-    await this.watchroomRepository.removeParticipant({ watchroomId, userId });
+    await this.watchroomRepository.removeParticipant(watchroomId, userId);
 
     this.loggerService.info({
       message: 'Left watchroom successfully.',

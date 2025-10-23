@@ -200,7 +200,13 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
 
       const user = await findUserAction.execute(userId);
 
@@ -264,7 +270,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     schema: {
       querystring: Type.Object({
         page: Type.Optional(Type.Number({ minimum: 1, maximum: 500 })),
-        limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100 })),
+        pageSize: Type.Optional(Type.Number({ minimum: 1, maximum: 100 })),
       }),
       response: {
         200: favoriteSeriesListSchema,
@@ -272,20 +278,26 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
-      const { page = 1, limit = 20 } = request.query;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
 
-      const result = await getUserFavoriteSeriesAction.execute(userId, page, limit);
+      const { userId } = request.user;
+      const { page = 1, pageSize = 20 } = request.query;
+
+      const { data, total } = await getUserFavoriteSeriesAction.execute({ userId, page, pageSize });
 
       return reply.send({
-        data: result.favorites.map((favorite) => ({
+        data: data.map((favorite) => ({
           seriesTmdbId: favorite.seriesTmdbId,
           addedAt: favorite.addedAt.toISOString(),
         })),
         metadata: {
           page,
-          pageSize: limit,
-          total: result.total,
+          pageSize,
+          total,
         },
       });
     },
@@ -302,7 +314,13 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
       const { seriesTmdbId } = request.body;
 
       const favorite = await addFavoriteSeriesAction.execute(userId, seriesTmdbId);
@@ -325,7 +343,13 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
       const { seriesTmdbId } = request.params;
 
       await removeFavoriteSeriesAction.execute(userId, seriesTmdbId);

@@ -87,7 +87,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
         });
       }
 
-      const userId = request.user.userId;
+      const { userId } = request.user;
       const { name, description } = request.body;
 
       const watchroom = await createWatchroomAction.execute({
@@ -125,18 +125,22 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
         });
       }
 
-      const userId = request.user.userId;
-      const { page, pageSize } = request.query;
+      const { userId } = request.user;
+      const { page = 1, pageSize = 20 } = request.query;
 
       const result = await findUserWatchroomsAction.execute({
         userId,
-        ...(page !== undefined && { page }),
-        ...(pageSize !== undefined && { pageSize }),
+        page,
+        pageSize,
       });
 
       return reply.send({
         data: result.data.map(mapWatchroomToResponse),
-        metadata: result.metadata,
+        metadata: {
+          page,
+          pageSize,
+          total: result.total,
+        },
       });
     },
   });
@@ -170,7 +174,13 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
       const { publicLinkId } = request.params;
 
       const watchroom = await joinWatchroomAction.execute({
@@ -249,7 +259,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
         });
       }
 
-      const userId = request.user.userId;
+      const { userId } = request.user;
       const { watchroomId } = request.params;
 
       await leaveWatchroomAction.execute({

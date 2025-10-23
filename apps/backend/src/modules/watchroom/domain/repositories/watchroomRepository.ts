@@ -12,32 +12,12 @@ export interface FindWatchroomParams {
   readonly publicLinkId?: string | undefined;
 }
 
-export interface FindWatchroomsParams {
-  readonly ownerId: string;
-  readonly page?: number;
-  readonly limit?: number;
-}
-
-export interface AddParticipantData {
-  readonly watchroomId: string;
-  readonly userId: string;
-}
-
-export interface RemoveParticipantData {
-  readonly watchroomId: string;
-  readonly userId: string;
-}
-
-export interface IsParticipantData {
-  readonly watchroomId: string;
-  readonly userId: string;
-}
-
 export type WatchroomRepository = {
   create(data: CreateWatchroomData): Promise<Watchroom>;
   findOne(params: FindWatchroomParams): Promise<Watchroom | null>;
-  findMany(params: FindWatchroomsParams): Promise<{ watchrooms: Watchroom[]; total: number }>;
-  addParticipant(data: AddParticipantData): Promise<void>;
-  removeParticipant(data: RemoveParticipantData): Promise<void>;
-  isParticipant(data: IsParticipantData): Promise<boolean>;
+  findMany(userId: string, page: number, pageSize: number): Promise<Watchroom[]>;
+  count(userId: string): Promise<number>;
+  addParticipant(watchroomId: string, userId: string): Promise<void>;
+  removeParticipant(watchroomId: string, userId: string): Promise<void>;
+  isParticipant(watchroomId: string, userId: string): Promise<boolean>;
 };

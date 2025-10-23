@@ -7,14 +7,8 @@ export interface CreateFavoriteSeriesData {
 
 export interface FavoriteSeriesRepository {
   create(favoriteSeriesData: CreateFavoriteSeriesData): Promise<FavoriteSeries>;
-  findByUserId(
-    userId: string,
-    page?: number,
-    limit?: number,
-  ): Promise<{
-    favorites: FavoriteSeries[];
-    total: number;
-  }>;
-  findByUserIdAndSeriesTmdbId(userId: string, seriesTmdbId: number): Promise<FavoriteSeries | null>;
+  findMany(userId: string, page: number, pageSize: number): Promise<FavoriteSeries[]>;
+  count(userId: string): Promise<number>;
+  findOne(userId: string, seriesTmdbId: number): Promise<FavoriteSeries | null>;
   delete(userId: string, seriesTmdbId: number): Promise<void>;
 }

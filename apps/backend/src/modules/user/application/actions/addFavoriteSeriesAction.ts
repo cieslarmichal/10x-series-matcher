@@ -10,7 +10,7 @@ export class AddFavoriteSeriesAction {
   }
 
   public async execute(userId: string, seriesTmdbId: number): Promise<FavoriteSeries> {
-    const existing = await this.favoriteSeriesRepository.findByUserIdAndSeriesTmdbId(userId, seriesTmdbId);
+    const existing = await this.favoriteSeriesRepository.findOne(userId, seriesTmdbId);
 
     if (existing) {
       throw new ResourceAlreadyExistsError({
