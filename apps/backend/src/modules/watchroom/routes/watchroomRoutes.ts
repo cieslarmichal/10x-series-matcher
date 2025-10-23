@@ -6,6 +6,7 @@ import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAcces
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
 import { CreateWatchroomAction } from '../application/actions/createWatchroomAction.ts';
+import { DeleteWatchroomAction } from '../application/actions/deleteWatchroomAction.ts';
 import { FindPublicWatchroomDetailsAction } from '../application/actions/findPublicWatchroomDetailsAction.ts';
 import { FindUserWatchroomsAction } from '../application/actions/findUserWatchroomsAction.ts';
 import { FindWatchroomDetailsAction } from '../application/actions/findWatchroomDetailsAction.ts';
@@ -47,6 +48,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   const findPublicWatchroomDetailsAction = new FindPublicWatchroomDetailsAction(watchroomRepository);
   const joinWatchroomAction = new JoinWatchroomAction(watchroomRepository, loggerService);
   const findWatchroomDetailsAction = new FindWatchroomDetailsAction(watchroomRepository);
+  const deleteWatchroomAction = new DeleteWatchroomAction(watchroomRepository, loggerService);
   const removeParticipantAction = new RemoveParticipantAction(watchroomRepository, loggerService);
   const leaveWatchroomAction = new LeaveWatchroomAction(watchroomRepository, loggerService);
 
@@ -203,11 +205,47 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const { watchroomId } = request.params;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
 
-      const watchroom = await findWatchroomDetailsAction.execute(watchroomId);
+      const { watchroomId } = request.params;
+      const { userId } = request.user;
+
+      const watchroom = await findWatchroomDetailsAction.execute({ watchroomId, userId });
 
       return reply.send(mapWatchroomToResponse(watchroom));
+    },
+  });
+
+  fastify.delete('/watchrooms/:watchroomId', {
+    schema: {
+      params: Type.Object({
+        watchroomId: Type.String({ format: 'uuid' }),
+      }),
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { watchroomId } = request.params;
+      const { userId } = request.user;
+
+      await deleteWatchroomAction.execute({
+        watchroomId,
+        userId,
+      });
+
+      return reply.status(204).send();
     },
   });
 

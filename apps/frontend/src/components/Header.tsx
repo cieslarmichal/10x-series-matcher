@@ -42,7 +42,11 @@ export default function Header() {
             {sections
               .filter((section) => !section.requiresAuth || userData)
               .map((item) => {
-                const isActive = location.pathname === item.href;
+                let isActive = location.pathname === '/' && location.pathname === item.href;
+
+                if (item.href !== '/') {
+                  isActive = location.pathname.startsWith(item.href);
+                }
                 return (
                   <button
                     key={item.href}

@@ -56,3 +56,9 @@ export const leaveWatchroom = async (watchroomId: string): Promise<void> => {
     method: 'POST',
   });
 };
+
+export const deleteWatchroom = async (watchroomId: string): Promise<void> => {
+  return apiRequest<void>(`/watchrooms/${watchroomId}`, {
+    method: 'DELETE',
+  });
+};

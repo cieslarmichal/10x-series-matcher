@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/Form';
 import { Input } from '@/components/ui/Input';
 import { loginUser } from '../api/queries/login';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
@@ -21,7 +21,9 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
+  const redirectTo = searchParams.get('redirect');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -36,7 +38,8 @@ export default function LoginForm() {
     try {
       await loginUser({ email: values.email, password: values.password });
 
-      navigate('/');
+      // Redirect to the intended page or home
+      navigate(redirectTo || '/');
     } catch {
       form.setError('root', {
         message: 'Invalid email or password',

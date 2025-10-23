@@ -17,6 +17,7 @@ export type WatchroomRepository = {
   findOne(params: FindWatchroomParams): Promise<Watchroom | null>;
   findMany(userId: string, page: number, pageSize: number): Promise<Watchroom[]>;
   count(userId: string): Promise<number>;
+  delete(watchroomId: string): Promise<void>;
   addParticipant(watchroomId: string, userId: string): Promise<void>;
   removeParticipant(watchroomId: string, userId: string): Promise<void>;
   isParticipant(watchroomId: string, userId: string): Promise<boolean>;

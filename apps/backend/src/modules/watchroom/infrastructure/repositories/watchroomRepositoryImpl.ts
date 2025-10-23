@@ -163,6 +163,10 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
     return countResult?.count ?? 0;
   }
 
+  public async delete(watchroomId: string): Promise<void> {
+    await this.database.db.delete(watchrooms).where(eq(watchrooms.id, watchroomId));
+  }
+
   public async addParticipant(watchroomId: string, userId: string): Promise<void> {
     await this.database.db.insert(watchroomParticipants).values({
       id: UuidService.generateUuid(),

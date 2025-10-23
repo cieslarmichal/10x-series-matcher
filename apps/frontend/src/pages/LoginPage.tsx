@@ -6,6 +6,7 @@ import RegisterForm from '../components/RegisterForm';
 export default function LoginPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab');
+  const redirect = searchParams.get('redirect');
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(tab === 'register' ? 'register' : 'login');
   const [isRegistrationSuccess, setIsRegistrationSuccess] = useState(false);
@@ -22,7 +23,9 @@ export default function LoginPage() {
 
   const handleTabChange = (newTab: 'login' | 'register') => {
     setActiveTab(newTab);
-    setSearchParams({ tab: newTab });
+    const params: Record<string, string> = { tab: newTab };
+    if (redirect) params.redirect = redirect;
+    setSearchParams(params);
     setIsRegistrationSuccess(false);
   };
 
@@ -33,7 +36,9 @@ export default function LoginPage() {
   const handleBackToLogin = () => {
     setIsRegistrationSuccess(false);
     setActiveTab('login');
-    setSearchParams({ tab: 'login' });
+    const params: Record<string, string> = { tab: 'login' };
+    if (redirect) params.redirect = redirect;
+    setSearchParams(params);
   };
 
   const getTabContent = () => {

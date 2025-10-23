@@ -79,7 +79,7 @@ export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProp
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
+            className="space-y-5"
           >
             <FormField
               control={form.control}
@@ -134,6 +134,11 @@ export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProp
             </div>
           </form>
         </Form>
+        {form.formState.errors.root && (
+          <div className="text-destructive text-sm mt-4 text-center bg-destructive/10 border border-destructive/20 rounded-md p-3">
+            {form.formState.errors.root.message}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

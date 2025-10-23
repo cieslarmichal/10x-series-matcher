@@ -42,7 +42,7 @@ export default function JoinRoomPage() {
     }
 
     if (!userData) {
-      navigate('/login');
+      navigate(`/login?redirect=/room/${publicLinkId}`);
       return;
     }
 
@@ -71,7 +71,7 @@ export default function JoinRoomPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-start justify-center p-4 py-12 md:py-16">
         <p className="text-muted-foreground">Loading room details...</p>
       </div>
     );
@@ -79,7 +79,7 @@ export default function JoinRoomPage() {
 
   if (!room) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-start justify-center p-4 py-12 md:py-16">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Room Not Found</CardTitle>

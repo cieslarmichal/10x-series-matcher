@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { Users, Copy, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Copy, ExternalLink, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyWatchrooms } from '../api/queries/watchroom';
 import type { Watchroom } from '../api/types/watchroom';
 import { CreateWatchRoomModal } from '../components/CreateWatchRoomModal';
+import { AuthContext } from '../context/AuthContext';
 
 export default function WatchRoomsPage() {
   const [rooms, setRooms] = useState<Watchroom[]>([]);
@@ -17,6 +18,7 @@ export default function WatchRoomsPage() {
   const [total, setTotal] = useState(0);
   const pageSize = 20;
   const navigate = useNavigate();
+  const { userData } = useContext(AuthContext);
 
   const fetchRooms = async () => {
     try {
@@ -50,96 +52,126 @@ export default function WatchRoomsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="space-y-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
+          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">My Watch Rooms</h1>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-muted-foreground mt-1.5">
                 Create rooms and invite friends to get AI-powered series recommendations
               </p>
             </div>
             <CreateWatchRoomModal onRoomCreated={fetchRooms} />
           </div>
 
-          {isLoading && <p>Loading...</p>}
-
-          {!isLoading && rooms.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-muted-foreground">No watch rooms yet</h3>
-              <p className="text-muted-foreground mt-2">
-                Create your first room to start getting group recommendations!
-              </p>
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mx-auto flex items-center justify-center animate-pulse">
+                  <Users className="w-8 h-8 text-primary" />
+                </div>
+                <p className="text-muted-foreground font-medium">Loading your rooms...</p>
+              </div>
             </div>
           )}
 
+          {/* Empty State */}
+          {!isLoading && rooms.length === 0 && (
+            <Card className="border-2 border-dashed">
+              <CardContent className="text-center py-16 px-6">
+                <Users className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No watch rooms yet</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+                  Create your first room to start getting AI-powered group recommendations!
+                </p>
+                <CreateWatchRoomModal onRoomCreated={fetchRooms} />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Rooms Grid */}
           {!isLoading && rooms.length > 0 && (
             <>
               <div className="grid gap-4">
-                {rooms.map((room) => (
-                  <Card
-                    key={room.id}
-                    className="hover:shadow-md transition-shadow"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <CardTitle className="text-xl">{room.name}</CardTitle>
-                            <Badge
-                              variant="secondary"
-                              className="shrink-0 h-6"
-                            >
-                              <Users className="w-3.5 h-3.5 mr-1.5" />
-                              <span className="font-semibold">{room.participants.length}</span>
-                            </Badge>
+                {rooms.map((room) => {
+                  const isOwner = userData?.id === room.ownerId;
+                  return (
+                    <Card
+                      key={room.id}
+                      className="hover:shadow-md transition-shadow"
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center flex-wrap gap-2 mb-2">
+                              <CardTitle className="text-xl">{room.name}</CardTitle>
+                              <Badge
+                                variant="secondary"
+                                className="shrink-0"
+                              >
+                                <Users className="w-3 h-3 mr-1" />
+                                {room.participants.length}
+                              </Badge>
+                              {isOwner && (
+                                <Badge
+                                  variant="outline"
+                                  className="shrink-0"
+                                >
+                                  Owner
+                                </Badge>
+                              )}
+                            </div>
+                            {room.description && (
+                              <CardDescription className="text-sm line-clamp-2 mb-2">
+                                {room.description}
+                              </CardDescription>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              <Calendar className="w-3 h-3 inline mr-1" />
+                              {new Date(room.createdAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </p>
                           </div>
-                          {room.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{room.description}</p>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Created{' '}
-                            {new Date(room.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </p>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopyLink(room.publicLinkId)}
-                          className="flex-1 sm:flex-none"
-                        >
-                          <Copy className="w-4 h-4 mr-2" />
-                          Copy Link
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleJoinRoom(room.id)}
-                          className="flex-1 sm:flex-none"
-                        >
-                          Open Room
-                          <ExternalLink className="w-4 h-4 ml-2" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyLink(room.publicLinkId)}
+                            className="flex-1 sm:flex-initial"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copy Link
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleJoinRoom(room.id)}
+                            className="flex-1 sm:flex-initial"
+                          >
+                            Open Room
+                            <ExternalLink className="w-4 h-4 ml-2" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
 
+              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {rooms.length} of {total} rooms
-                  </div>
-                  <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {rooms.length} of {total} {total === 1 ? 'room' : 'rooms'}
+                  </p>
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -149,11 +181,9 @@ export default function WatchRoomsPage() {
                       <ChevronLeft className="w-4 h-4 mr-1" />
                       Previous
                     </Button>
-                    <div className="flex items-center gap-2 px-3">
-                      <span className="text-sm">
-                        Page {page} of {totalPages}
-                      </span>
-                    </div>
+                    <span className="text-sm px-3">
+                      Page {page} of {totalPages}
+                    </span>
                     <Button
                       variant="outline"
                       size="sm"
