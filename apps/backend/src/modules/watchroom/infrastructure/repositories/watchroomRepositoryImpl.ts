@@ -1,4 +1,4 @@
-import { eq, and, inArray, or, count, type SQL } from 'drizzle-orm';
+import { eq, desc, and, inArray, or, count, type SQL } from 'drizzle-orm';
 
 import { UuidService } from '../../../../common/uuid/uuidService.ts';
 import type { Database } from '../../../../infrastructure/database/database.ts';
@@ -6,6 +6,7 @@ import { users, watchroomParticipants, watchrooms } from '../../../../infrastruc
 import type {
   CreateWatchroomData,
   FindWatchroomParams,
+  UpdateWatchroomData,
   WatchroomRepository,
 } from '../../domain/repositories/watchroomRepository.ts';
 import type { Watchroom } from '../../domain/types/watchroom.ts';
@@ -128,6 +129,7 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       .from(watchrooms)
       .innerJoin(users, eq(watchrooms.ownerId, users.id))
       .where(inArray(watchrooms.id, watchroomIds))
+      .orderBy(desc(watchrooms.id))
       .limit(pageSize)
       .offset(pageSize * (page - 1));
 
@@ -165,6 +167,28 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
 
   public async delete(watchroomId: string): Promise<void> {
     await this.database.db.delete(watchrooms).where(eq(watchrooms.id, watchroomId));
+  }
+
+  public async update(watchroomId: string, data: UpdateWatchroomData): Promise<Watchroom> {
+    let updateData = {};
+
+    if (data.name !== undefined) {
+      updateData = { ...updateData, name: data.name };
+    }
+
+    if (data.description !== undefined) {
+      updateData = { ...updateData, description: data.description };
+    }
+
+    await this.database.db.update(watchrooms).set(updateData).where(eq(watchrooms.id, watchroomId));
+
+    const updatedWatchroom = await this.findOne({ id: watchroomId });
+
+    if (!updatedWatchroom) {
+      throw new Error('Failed to update watchroom');
+    }
+
+    return updatedWatchroom;
   }
 
   public async addParticipant(watchroomId: string, userId: string): Promise<void> {

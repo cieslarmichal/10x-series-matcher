@@ -7,6 +7,11 @@ export interface CreateWatchroomData {
   readonly publicLinkId: string;
 }
 
+export interface UpdateWatchroomData {
+  readonly name?: string | undefined;
+  readonly description?: string | undefined;
+}
+
 export interface FindWatchroomParams {
   readonly id?: string | undefined;
   readonly publicLinkId?: string | undefined;
@@ -18,6 +23,7 @@ export type WatchroomRepository = {
   findMany(userId: string, page: number, pageSize: number): Promise<Watchroom[]>;
   count(userId: string): Promise<number>;
   delete(watchroomId: string): Promise<void>;
+  update(watchroomId: string, data: UpdateWatchroomData): Promise<Watchroom>;
   addParticipant(watchroomId: string, userId: string): Promise<void>;
   removeParticipant(watchroomId: string, userId: string): Promise<void>;
   isParticipant(watchroomId: string, userId: string): Promise<boolean>;

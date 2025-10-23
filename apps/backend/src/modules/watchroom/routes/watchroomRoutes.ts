@@ -13,16 +13,17 @@ import { FindWatchroomDetailsAction } from '../application/actions/findWatchroom
 import { JoinWatchroomAction } from '../application/actions/joinWatchroomAction.ts';
 import { LeaveWatchroomAction } from '../application/actions/leaveWatchroomAction.ts';
 import { RemoveParticipantAction } from '../application/actions/removeParticipantAction.ts';
+import { UpdateWatchroomAction } from '../application/actions/updateWatchroomAction.ts';
 import type { Watchroom } from '../domain/types/watchroom.ts';
 import { WatchroomRepositoryImpl } from '../infrastructure/repositories/watchroomRepositoryImpl.ts';
 
 const watchroomNameSchema = Type.String({ minLength: 1, maxLength: 64 });
-const watchroomDescriptionSchema = Type.Optional(Type.String({ maxLength: 256 }));
+const watchroomDescriptionSchema = Type.String({ maxLength: 256 });
 
 const watchroomSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
   name: watchroomNameSchema,
-  description: watchroomDescriptionSchema,
+  description: Type.Optional(watchroomDescriptionSchema),
   ownerId: Type.String({ format: 'uuid' }),
   publicLinkId: Type.String(),
   createdAt: Type.String({ format: 'date-time' }),
@@ -48,6 +49,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   const findPublicWatchroomDetailsAction = new FindPublicWatchroomDetailsAction(watchroomRepository);
   const joinWatchroomAction = new JoinWatchroomAction(watchroomRepository, loggerService);
   const findWatchroomDetailsAction = new FindWatchroomDetailsAction(watchroomRepository);
+  const updateWatchroomAction = new UpdateWatchroomAction(watchroomRepository, loggerService);
   const deleteWatchroomAction = new DeleteWatchroomAction(watchroomRepository, loggerService);
   const removeParticipantAction = new RemoveParticipantAction(watchroomRepository, loggerService);
   const leaveWatchroomAction = new LeaveWatchroomAction(watchroomRepository, loggerService);
@@ -75,7 +77,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     schema: {
       body: Type.Object({
         name: watchroomNameSchema,
-        description: watchroomDescriptionSchema,
+        description: Type.Optional(watchroomDescriptionSchema),
       }),
       response: {
         201: watchroomSchema,
@@ -220,6 +222,42 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
+  fastify.patch('/watchrooms/:watchroomId', {
+    schema: {
+      params: Type.Object({
+        watchroomId: Type.String({ format: 'uuid' }),
+      }),
+      body: Type.Object({
+        name: Type.Optional(watchroomNameSchema),
+        description: Type.Optional(watchroomDescriptionSchema),
+      }),
+      response: {
+        200: watchroomSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { watchroomId } = request.params;
+      const { userId } = request.user;
+      const { name, description } = request.body;
+
+      const watchroom = await updateWatchroomAction.execute({
+        watchroomId,
+        userId,
+        name,
+        description,
+      });
+
+      return reply.send(mapWatchroomToResponse(watchroom));
+    },
+  });
+
   fastify.delete('/watchrooms/:watchroomId', {
     schema: {
       params: Type.Object({
@@ -240,10 +278,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
       const { watchroomId } = request.params;
       const { userId } = request.user;
 
-      await deleteWatchroomAction.execute({
-        watchroomId,
-        userId,
-      });
+      await deleteWatchroomAction.execute({ watchroomId, userId });
 
       return reply.status(204).send();
     },

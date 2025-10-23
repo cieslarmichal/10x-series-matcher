@@ -9,11 +9,11 @@ import { TooltipProvider } from './components/ui/Tooltip.tsx';
 import PrivateRoute from './auth/privateRoute.tsx';
 import LogoutPage from './pages/LogoutPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
-import SeriesPage from './pages/Series.tsx';
-import WatchRoomsPage from './pages/WatchRooms.tsx';
-import ProfilePage from './pages/Profile.tsx';
+import SeriesPage from './pages/SeriesPage.tsx';
+import WatchRoomsPage from './pages/WatchRoomsPage.tsx';
+import ProfilePage from './pages/ProfilePage.tsx';
 import JoinWatchRoomPage from './pages/JoinWatchRoomPage.tsx';
-import RoomPage from './pages/WatchRoomPage.tsx';
+import WatchRoomDetailsPage from './pages/WatchRoomDetailsPage.tsx';
 
 const router = createBrowserRouter([
   {
@@ -56,7 +56,7 @@ const router = createBrowserRouter([
         path: '/watchrooms/:watchroomId',
         element: (
           <PrivateRoute>
-            <RoomPage />
+            <WatchRoomDetailsPage />
           </PrivateRoute>
         ),
       },

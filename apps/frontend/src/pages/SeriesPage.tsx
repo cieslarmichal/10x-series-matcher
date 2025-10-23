@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import SearchSeries from '../components/SearchSeries';
-import FavoriteSeriesList from '../components/FavoriteSeriesList';
-import { getMyFavoriteSeries } from '../api/queries/getMyFavoriteSeries';
-import { addFavoriteSeries } from '../api/queries/addFavoriteSeries';
-import { removeFavoriteSeries } from '../api/queries/removeFavoriteSeries';
-import { Series, FavoriteSeries } from '../api/types/series';
+import SearchSeries from '../components/SearchSeries.tsx';
+import FavoriteSeriesList from '../components/FavoriteSeriesList.tsx';
+import { getMyFavoriteSeries } from '../api/queries/getMyFavoriteSeries.ts';
+import { addFavoriteSeries } from '../api/queries/addFavoriteSeries.ts';
+import { removeFavoriteSeries } from '../api/queries/removeFavoriteSeries.ts';
+import { Series, FavoriteSeries } from '../api/types/series.ts';
 
 export default function SeriesPage() {
   const [profileSeriesIds, setProfileSeriesIds] = useState<Set<number>>(new Set());

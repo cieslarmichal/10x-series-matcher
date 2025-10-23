@@ -1,14 +1,14 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button.tsx';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../components/ui/Card.tsx';
+import { Badge } from '../components/ui/Badge.tsx';
 import { Users, Copy, ExternalLink, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
-import { getMyWatchrooms } from '../api/queries/watchroom';
-import type { Watchroom } from '../api/types/watchroom';
-import { CreateWatchRoomModal } from '../components/CreateWatchRoomModal';
-import { AuthContext } from '../context/AuthContext';
+import { getMyWatchrooms } from '../api/queries/watchroom.ts';
+import type { Watchroom } from '../api/types/watchroom.ts';
+import { CreateWatchRoomModal } from '../components/CreateWatchRoomModal.tsx';
+import { AuthContext } from '../context/AuthContext.tsx';
 
 export default function WatchRoomsPage() {
   const [rooms, setRooms] = useState<Watchroom[]>([]);
@@ -94,25 +94,26 @@ export default function WatchRoomsPage() {
           {/* Rooms Grid */}
           {!isLoading && rooms.length > 0 && (
             <>
-              <div className="grid gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {rooms.map((room) => {
                   const isOwner = userData?.id === room.ownerId;
                   return (
                     <Card
                       key={room.id}
-                      className="hover:shadow-md transition-shadow"
+                      className="flex flex-col hover:shadow-lg transition-shadow duration-300"
                     >
-                      <CardHeader className="pb-3">
+                      <CardHeader>
                         <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center flex-wrap gap-2 mb-2">
-                              <CardTitle className="text-xl">{room.name}</CardTitle>
+                          <div className="flex-1 min-w-0 space-y-2.5">
+                            <CardTitle className="text-xl line-clamp-1">{room.name}</CardTitle>
+                            <div className="flex items-center flex-wrap gap-2 text-sm text-muted-foreground">
                               <Badge
                                 variant="secondary"
                                 className="shrink-0"
                               >
-                                <Users className="w-3 h-3 mr-1" />
-                                {room.participants.length}
+                                <Users className="w-3 h-3 mr-1.5" />
+                                {room.participants.length} Member
+                                {room.participants.length > 1 && 's'}
                               </Badge>
                               {isOwner && (
                                 <Badge
@@ -123,43 +124,47 @@ export default function WatchRoomsPage() {
                                 </Badge>
                               )}
                             </div>
-                            {room.description && (
-                              <CardDescription className="text-sm line-clamp-2 mb-2">
-                                {room.description}
-                              </CardDescription>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              <Calendar className="w-3 h-3 inline mr-1" />
-                              {new Date(room.createdAt).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </p>
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <Calendar className="w-3 h-3 mr-1.5 shrink-0" />
+                              <span>
+                                {new Date(room.createdAt).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCopyLink(room.publicLinkId)}
-                            className="flex-1 sm:flex-initial"
-                          >
-                            <Copy className="w-4 h-4 mr-2" />
-                            Copy Link
-                          </Button>
+                      <CardContent className="flex-grow pb-6">
+                        {room.description ? (
+                          <CardDescription className="line-clamp-2">{room.description}</CardDescription>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">No description provided.</p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="pt-0">
+                        <div className="w-full flex items-center gap-2">
                           <Button
                             size="sm"
                             onClick={() => handleOpenWatchRoom(room.id)}
-                            className="flex-1 sm:flex-initial"
+                            className="flex-1"
                           >
                             Open Room
                             <ExternalLink className="w-4 h-4 ml-2" />
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyLink(room.publicLinkId)}
+                            className="flex-1"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copy Link
+                          </Button>
                         </div>
-                      </CardContent>
+                      </CardFooter>
                     </Card>
                   );
                 })}

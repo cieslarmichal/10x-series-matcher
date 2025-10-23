@@ -62,3 +62,13 @@ export const deleteWatchroom = async (watchroomId: string): Promise<void> => {
     method: 'DELETE',
   });
 };
+
+export const updateWatchroom = async (
+  watchroomId: string,
+  payload: { name?: string; description?: string },
+): Promise<Watchroom> => {
+  return apiRequest<Watchroom>(`/watchrooms/${watchroomId}`, {
+    method: 'PATCH',
+    body: payload,
+  });
+};

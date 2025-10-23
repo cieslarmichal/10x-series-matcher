@@ -9,6 +9,7 @@ import type { WatchroomDetails } from '../api/types/watchroom.ts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card.tsx';
 import { Button } from '../components/ui/Button.tsx';
 import { Badge } from '../components/ui/Badge.tsx';
+import { EditWatchRoomModal } from '../components/EditWatchRoomModal.tsx';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,7 @@ import {
   DialogTitle,
 } from '../components/ui/Dialog.tsx';
 
-export default function RoomPage() {
+export default function WatchRoomDetailsPage() {
   const { watchroomId } = useParams<{ watchroomId: string }>();
   const [room, setRoom] = useState<WatchroomDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -213,7 +214,7 @@ export default function RoomPage() {
                     })}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="default"
                     onClick={handleCopyLink}
@@ -223,14 +224,22 @@ export default function RoomPage() {
                     Copy Link
                   </Button>
                   {isOwner && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setConfirmDeleteDialog(true)}
-                      className="sm:self-start hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Room
-                    </Button>
+                    <>
+                      <EditWatchRoomModal
+                        watchroomId={room.id}
+                        currentName={room.name}
+                        currentDescription={room.description}
+                        onRoomUpdated={() => fetchRoomDetails(watchroomId!)}
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => setConfirmDeleteDialog(true)}
+                        className="sm:self-start hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Room
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>

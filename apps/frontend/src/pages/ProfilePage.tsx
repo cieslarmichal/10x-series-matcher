@@ -1,14 +1,14 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
+import { AuthContext } from '../context/AuthContext.tsx';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card.tsx';
+import { Button } from '../components/ui/Button.tsx';
 import { User, Mail, Eye, EyeOff } from 'lucide-react';
-import { getMyUser } from '../api/queries/getMyUser';
-import { User as UserType } from '../api/types/user';
+import { getMyUser } from '../api/queries/getMyUser.ts';
+import { User as UserType } from '../api/types/user.ts';
 import { toast } from 'sonner';
-import { getMyFavoriteSeries } from '../api/queries/getMyFavoriteSeries';
-import { getMyWatchrooms } from '../api/queries/watchroom';
+import { getMyFavoriteSeries } from '../api/queries/getMyFavoriteSeries.ts';
+import { getMyWatchrooms } from '../api/queries/watchroom.ts';
 import {
   Dialog,
   DialogContent,
@@ -18,14 +18,14 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogClose,
-} from '../components/ui/Dialog';
-import { deleteUser } from '../api/queries/deleteUser';
+} from '../components/ui/Dialog.tsx';
+import { deleteUser } from '../api/queries/deleteUser.ts';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Input } from '../components/ui/Input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/Form';
-import { changePassword } from '../api/queries/changePassword';
+import { Input } from '../components/ui/Input.tsx';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/Form.tsx';
+import { changePassword } from '../api/queries/changePassword.ts';
 
 const changePasswordSchema = z
   .object({
