@@ -23,32 +23,12 @@ const watchroomSchema = Type.Object({
   ownerId: Type.String({ format: 'uuid' }),
   publicLinkId: Type.String(),
   createdAt: Type.String({ format: 'date-time' }),
-});
-
-const participantSchema = Type.Object({
-  id: Type.String({ format: 'uuid' }),
-  name: Type.String(),
-});
-
-const watchroomDetailsSchema = Type.Intersect([
-  watchroomSchema,
-  Type.Object({
-    participants: Type.Array(participantSchema),
-  }),
-]);
-
-const watchroomWithParticipantCountSchema = Type.Intersect([
-  watchroomSchema,
-  Type.Object({
-    participantCount: Type.Number(),
-  }),
-]);
-
-const publicWatchroomDetailsSchema = Type.Object({
-  name: watchroomNameSchema,
-  description: watchroomDescriptionSchema,
-  ownerName: Type.String(),
-  participantCount: Type.Number(),
+  participants: Type.Array(
+    Type.Object({
+      id: Type.String({ format: 'uuid' }),
+      name: Type.String(),
+    }),
+  ),
 });
 
 export const watchroomRoutes: FastifyPluginAsyncTypebox<{
@@ -75,20 +55,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
       ownerId: watchroom.ownerId,
       publicLinkId: watchroom.publicLinkId,
       createdAt: watchroom.createdAt.toISOString(),
-    };
-
-    if (watchroom.description) {
-      response.description = watchroom.description;
-    }
-
-    return response;
-  };
-
-  const mapPublicWatchroomToResponse = (watchroom: Watchroom): Static<typeof publicWatchroomDetailsSchema> => {
-    const response: Static<typeof publicWatchroomDetailsSchema> = {
-      name: watchroom.name,
-      ownerName: watchroom.ownerName,
-      participantCount: watchroom.participants.length,
+      participants: watchroom.participants,
     };
 
     if (watchroom.description) {
@@ -132,7 +99,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   fastify.get('/watchrooms', {
     schema: {
       response: {
-        200: Type.Array(watchroomWithParticipantCountSchema),
+        200: Type.Array(watchroomSchema),
       },
     },
     preHandler: [authenticationMiddleware],
@@ -145,14 +112,9 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
 
       const userId = request.user.userId;
 
-      const watchrooms: Watchroom[] = await findUserWatchroomsAction.execute(userId);
+      const watchrooms = await findUserWatchroomsAction.execute(userId);
 
-      return reply.send(
-        watchrooms.map((watchroom) => ({
-          ...mapWatchroomToResponse(watchroom),
-          participantCount: watchroom.participants.length,
-        })),
-      );
+      return reply.send(watchrooms.map(mapWatchroomToResponse));
     },
   });
 
@@ -162,15 +124,15 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
         publicLinkId: Type.String({ minLength: 1 }),
       }),
       response: {
-        200: publicWatchroomDetailsSchema,
+        200: watchroomSchema,
       },
     },
     handler: async (request, reply) => {
       const { publicLinkId } = request.params;
 
-      const watchroom: Watchroom = await findPublicWatchroomDetailsAction.execute(publicLinkId);
+      const watchroom = await findPublicWatchroomDetailsAction.execute(publicLinkId);
 
-      return reply.send(mapPublicWatchroomToResponse(watchroom));
+      return reply.send(mapWatchroomToResponse(watchroom));
     },
   });
 
@@ -203,22 +165,16 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
         watchroomId: Type.String({ format: 'uuid' }),
       }),
       response: {
-        200: watchroomDetailsSchema,
+        200: watchroomSchema,
       },
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
       const { watchroomId } = request.params;
 
-      const watchroom: Watchroom = await findWatchroomDetailsAction.execute(watchroomId);
+      const watchroom = await findWatchroomDetailsAction.execute(watchroomId);
 
-      return reply.send({
-        ...mapWatchroomToResponse(watchroom),
-        participants: watchroom.participants.map((p) => ({
-          id: p.id,
-          name: p.name,
-        })),
-      });
+      return reply.send(mapWatchroomToResponse(watchroom));
     },
   });
 };

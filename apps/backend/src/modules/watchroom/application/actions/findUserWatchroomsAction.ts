@@ -9,7 +9,7 @@ export class FindUserWatchroomsAction {
   }
 
   public async execute(userId: string): Promise<Watchroom[]> {
-    const watchrooms = await this.watchroomRepository.findByUserId(userId);
+    const watchrooms = await this.watchroomRepository.findMany({ ownerId: userId });
 
     return watchrooms;
   }

@@ -7,11 +7,29 @@ export interface CreateWatchroomData {
   readonly publicLinkId: string;
 }
 
+export interface FindWatchroomParams {
+  readonly id?: string | undefined;
+  readonly publicLinkId?: string | undefined;
+}
+
+export interface FindWatchroomsParams {
+  readonly ownerId: string;
+}
+
+export interface AddParticipantData {
+  readonly watchroomId: string;
+  readonly userId: string;
+}
+
+export interface IsParticipantData {
+  readonly watchroomId: string;
+  readonly userId: string;
+}
+
 export type WatchroomRepository = {
   create(data: CreateWatchroomData): Promise<Watchroom>;
-  findById(watchroomId: string): Promise<Watchroom | null>;
-  findByUserId(userId: string): Promise<Watchroom[]>;
-  findByPublicLinkId(publicLinkId: string): Promise<Watchroom | null>;
-  addParticipant(watchroomId: string, userId: string): Promise<void>;
-  isParticipant(watchroomId: string, userId: string): Promise<boolean>;
+  findOne(params: FindWatchroomParams): Promise<Watchroom | null>;
+  findMany(params: FindWatchroomsParams): Promise<Watchroom[]>;
+  addParticipant(data: AddParticipantData): Promise<void>;
+  isParticipant(data: IsParticipantData): Promise<boolean>;
 };

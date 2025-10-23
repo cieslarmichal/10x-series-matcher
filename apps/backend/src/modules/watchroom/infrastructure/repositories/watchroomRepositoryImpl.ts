@@ -1,10 +1,27 @@
-import { eq, sql, inArray } from 'drizzle-orm';
+import { eq, and, inArray, or, type SQL } from 'drizzle-orm';
 
 import { UuidService } from '../../../../common/uuid/uuidService.ts';
 import type { Database } from '../../../../infrastructure/database/database.ts';
 import { users, watchroomParticipants, watchrooms } from '../../../../infrastructure/database/schema.ts';
-import type { CreateWatchroomData, WatchroomRepository } from '../../domain/repositories/watchroomRepository.ts';
+import type {
+  AddParticipantData,
+  CreateWatchroomData,
+  FindWatchroomParams,
+  FindWatchroomsParams,
+  IsParticipantData,
+  WatchroomRepository,
+} from '../../domain/repositories/watchroomRepository.ts';
 import type { Watchroom } from '../../domain/types/watchroom.ts';
+
+interface WatchroomRow {
+  id: string;
+  name: string;
+  description: string | null;
+  ownerId: string;
+  ownerName: string;
+  publicLinkId: string;
+  createdAt: Date;
+}
 
 export class WatchroomRepositoryImpl implements WatchroomRepository {
   private readonly database: Database;
@@ -32,7 +49,7 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       });
     });
 
-    const watchroom = await this.findById(watchroomId);
+    const watchroom = await this.findOne({ id: watchroomId });
 
     if (!watchroom) {
       throw new Error('Failed to create watchroom');
@@ -41,7 +58,23 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
     return watchroom;
   }
 
-  public async findById(watchroomId: string): Promise<Watchroom | null> {
+  public async findOne(params: FindWatchroomParams): Promise<Watchroom | null> {
+    const conditions: SQL[] = [];
+
+    if (params.id) {
+      conditions.push(eq(watchrooms.id, params.id));
+    }
+
+    if (params.publicLinkId) {
+      conditions.push(eq(watchrooms.publicLinkId, params.publicLinkId));
+    }
+
+    if (conditions.length === 0) {
+      return null;
+    }
+
+    const whereClause = conditions.length === 1 ? conditions[0] : or(...conditions);
+
     const [watchroomData] = await this.database.db
       .select({
         id: watchrooms.id,
@@ -54,7 +87,7 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       })
       .from(watchrooms)
       .innerJoin(users, eq(watchrooms.ownerId, users.id))
-      .where(eq(watchrooms.id, watchroomId))
+      .where(whereClause)
       .limit(1);
 
     if (!watchroomData) {
@@ -68,28 +101,16 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       })
       .from(watchroomParticipants)
       .innerJoin(users, eq(watchroomParticipants.userId, users.id))
-      .where(eq(watchroomParticipants.watchroomId, watchroomId));
+      .where(eq(watchroomParticipants.watchroomId, watchroomData.id));
 
-    return {
-      id: watchroomData.id,
-      name: watchroomData.name,
-      description: watchroomData.description ?? undefined,
-      ownerId: watchroomData.ownerId,
-      ownerName: watchroomData.ownerName,
-      publicLinkId: watchroomData.publicLinkId,
-      createdAt: watchroomData.createdAt,
-      participants: participants.map((p) => ({
-        id: p.id,
-        name: p.name,
-      })),
-    };
+    return this.mapToWatchroom(watchroomData, participants);
   }
 
-  public async findByUserId(userId: string): Promise<Watchroom[]> {
+  public async findMany(params: FindWatchroomsParams): Promise<Watchroom[]> {
     const userWatchroomIds = await this.database.db
       .select({ watchroomId: watchroomParticipants.watchroomId })
       .from(watchroomParticipants)
-      .where(eq(watchroomParticipants.userId, userId));
+      .where(eq(watchroomParticipants.userId, params.ownerId));
 
     if (userWatchroomIds.length === 0) {
       return [];
@@ -121,59 +142,32 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       .innerJoin(users, eq(watchroomParticipants.userId, users.id))
       .where(inArray(watchroomParticipants.watchroomId, watchroomIds));
 
-    const participantsByWatchroom = new Map<string, Array<{ id: string; name: string }>>();
+    const participantsByWatchroom = this.groupParticipantsByWatchroom(allParticipants);
 
-    for (const participant of allParticipants) {
-      if (!participantsByWatchroom.has(participant.watchroomId)) {
-        participantsByWatchroom.set(participant.watchroomId, []);
-      }
-      participantsByWatchroom.get(participant.watchroomId)?.push({
-        id: participant.userId,
-        name: participant.userName,
-      });
-    }
-
-    return watchroomsData.map((w) => ({
-      id: w.id,
-      name: w.name,
-      description: w.description ?? undefined,
-      ownerId: w.ownerId,
-      ownerName: w.ownerName,
-      publicLinkId: w.publicLinkId,
-      createdAt: w.createdAt,
-      participants: participantsByWatchroom.get(w.id) ?? [],
-    }));
+    return watchroomsData.map((w) => this.mapToWatchroom(w, participantsByWatchroom.get(w.id) ?? []));
   }
 
-  public async findByPublicLinkId(publicLinkId: string): Promise<Watchroom | null> {
-    const [watchroomData] = await this.database.db
-      .select({
-        id: watchrooms.id,
-        name: watchrooms.name,
-        description: watchrooms.description,
-        ownerId: watchrooms.ownerId,
-        ownerName: users.name,
-        publicLinkId: watchrooms.publicLinkId,
-        createdAt: watchrooms.createdAt,
-      })
-      .from(watchrooms)
-      .innerJoin(users, eq(watchrooms.ownerId, users.id))
-      .where(eq(watchrooms.publicLinkId, publicLinkId))
+  public async addParticipant(data: AddParticipantData): Promise<void> {
+    await this.database.db.insert(watchroomParticipants).values({
+      id: UuidService.generateUuid(),
+      watchroomId: data.watchroomId,
+      userId: data.userId,
+    });
+  }
+
+  public async isParticipant(data: IsParticipantData): Promise<boolean> {
+    const [participant] = await this.database.db
+      .select()
+      .from(watchroomParticipants)
+      .where(
+        and(eq(watchroomParticipants.watchroomId, data.watchroomId), eq(watchroomParticipants.userId, data.userId)),
+      )
       .limit(1);
 
-    if (!watchroomData) {
-      return null;
-    }
+    return !!participant;
+  }
 
-    const participants = await this.database.db
-      .select({
-        id: users.id,
-        name: users.name,
-      })
-      .from(watchroomParticipants)
-      .innerJoin(users, eq(watchroomParticipants.userId, users.id))
-      .where(eq(watchroomParticipants.watchroomId, watchroomData.id));
-
+  private mapToWatchroom(watchroomData: WatchroomRow, participants: Array<{ id: string; name: string }>): Watchroom {
     return {
       id: watchroomData.id,
       name: watchroomData.name,
@@ -189,21 +183,21 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
     };
   }
 
-  public async addParticipant(watchroomId: string, userId: string): Promise<void> {
-    await this.database.db.insert(watchroomParticipants).values({
-      id: UuidService.generateUuid(),
-      watchroomId,
-      userId,
-    });
-  }
+  private groupParticipantsByWatchroom(
+    participants: Array<{ watchroomId: string; userId: string; userName: string }>,
+  ): Map<string, Array<{ id: string; name: string }>> {
+    const participantsByWatchroom = new Map<string, Array<{ id: string; name: string }>>();
 
-  public async isParticipant(watchroomId: string, userId: string): Promise<boolean> {
-    const [participant] = await this.database.db
-      .select()
-      .from(watchroomParticipants)
-      .where(sql`${watchroomParticipants.watchroomId} = ${watchroomId} AND ${watchroomParticipants.userId} = ${userId}`)
-      .limit(1);
+    for (const participant of participants) {
+      if (!participantsByWatchroom.has(participant.watchroomId)) {
+        participantsByWatchroom.set(participant.watchroomId, []);
+      }
+      participantsByWatchroom.get(participant.watchroomId)?.push({
+        id: participant.userId,
+        name: participant.userName,
+      });
+    }
 
-    return !!participant;
+    return participantsByWatchroom;
   }
 }

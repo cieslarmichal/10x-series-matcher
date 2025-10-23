@@ -27,17 +27,16 @@ export class JoinWatchroomAction {
       userId,
     });
 
-    const watchroom = await this.watchroomRepository.findByPublicLinkId(publicLinkId);
+    const watchroom = await this.watchroomRepository.findOne({ publicLinkId });
 
     if (!watchroom) {
       throw new ResourceNotFoundError({
         resource: 'Watchroom',
-        reason: 'Watchroom not found',
-        publicLinkId,
+        id: publicLinkId,
       });
     }
 
-    const isParticipant = await this.watchroomRepository.isParticipant(watchroom.id, userId);
+    const isParticipant = await this.watchroomRepository.isParticipant({ watchroomId: watchroom.id, userId });
 
     if (isParticipant) {
       throw new ResourceAlreadyExistsError({
@@ -48,7 +47,7 @@ export class JoinWatchroomAction {
       });
     }
 
-    await this.watchroomRepository.addParticipant(watchroom.id, userId);
+    await this.watchroomRepository.addParticipant({ watchroomId: watchroom.id, userId });
 
     this.loggerService.info({
       message: 'Watchroom joined successfully.',

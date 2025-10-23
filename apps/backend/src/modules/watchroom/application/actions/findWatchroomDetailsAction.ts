@@ -10,13 +10,12 @@ export class FindWatchroomDetailsAction {
   }
 
   public async execute(watchroomId: string): Promise<Watchroom> {
-    const watchroom = await this.watchroomRepository.findById(watchroomId);
+    const watchroom = await this.watchroomRepository.findOne({ id: watchroomId });
 
     if (!watchroom) {
       throw new ResourceNotFoundError({
         resource: 'Watchroom',
-        reason: 'Watchroom not found',
-        watchroomId,
+        id: watchroomId,
       });
     }
 
