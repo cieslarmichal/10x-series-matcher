@@ -10,6 +10,8 @@ import { FindPublicWatchroomDetailsAction } from '../application/actions/findPub
 import { FindUserWatchroomsAction } from '../application/actions/findUserWatchroomsAction.ts';
 import { FindWatchroomDetailsAction } from '../application/actions/findWatchroomDetailsAction.ts';
 import { JoinWatchroomAction } from '../application/actions/joinWatchroomAction.ts';
+import { LeaveWatchroomAction } from '../application/actions/leaveWatchroomAction.ts';
+import { RemoveParticipantAction } from '../application/actions/removeParticipantAction.ts';
 import type { Watchroom } from '../domain/types/watchroom.ts';
 import { WatchroomRepositoryImpl } from '../infrastructure/repositories/watchroomRepositoryImpl.ts';
 
@@ -45,6 +47,8 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   const findPublicWatchroomDetailsAction = new FindPublicWatchroomDetailsAction(watchroomRepository);
   const joinWatchroomAction = new JoinWatchroomAction(watchroomRepository, loggerService);
   const findWatchroomDetailsAction = new FindWatchroomDetailsAction(watchroomRepository);
+  const removeParticipantAction = new RemoveParticipantAction(watchroomRepository, loggerService);
+  const leaveWatchroomAction = new LeaveWatchroomAction(watchroomRepository, loggerService);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
 
@@ -98,8 +102,19 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.get('/watchrooms', {
     schema: {
+      querystring: Type.Object({
+        page: Type.Optional(Type.Integer({ minimum: 1 })),
+        pageSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+      }),
       response: {
-        200: Type.Array(watchroomSchema),
+        200: Type.Object({
+          data: Type.Array(watchroomSchema),
+          metadata: Type.Object({
+            page: Type.Integer(),
+            pageSize: Type.Integer(),
+            total: Type.Integer(),
+          }),
+        }),
       },
     },
     preHandler: [authenticationMiddleware],
@@ -111,10 +126,18 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
       }
 
       const userId = request.user.userId;
+      const { page, pageSize } = request.query;
 
-      const watchrooms = await findUserWatchroomsAction.execute(userId);
+      const result = await findUserWatchroomsAction.execute({
+        userId,
+        ...(page !== undefined && { page }),
+        ...(pageSize !== undefined && { pageSize }),
+      });
 
-      return reply.send(watchrooms.map(mapWatchroomToResponse));
+      return reply.send({
+        data: result.data.map(mapWatchroomToResponse),
+        metadata: result.metadata,
+      });
     },
   });
 
@@ -175,6 +198,66 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
       const watchroom = await findWatchroomDetailsAction.execute(watchroomId);
 
       return reply.send(mapWatchroomToResponse(watchroom));
+    },
+  });
+
+  fastify.delete('/watchrooms/:watchroomId/participants/:participantId', {
+    schema: {
+      params: Type.Object({
+        watchroomId: Type.String({ format: 'uuid' }),
+        participantId: Type.String({ format: 'uuid' }),
+      }),
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const requesterId = request.user.userId;
+      const { watchroomId, participantId } = request.params;
+
+      await removeParticipantAction.execute({
+        watchroomId,
+        participantId,
+        requesterId,
+      });
+
+      return reply.status(204).send();
+    },
+  });
+
+  fastify.delete('/watchrooms/:watchroomId/leave', {
+    schema: {
+      params: Type.Object({
+        watchroomId: Type.String({ format: 'uuid' }),
+      }),
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const userId = request.user.userId;
+      const { watchroomId } = request.params;
+
+      await leaveWatchroomAction.execute({
+        watchroomId,
+        userId,
+      });
+
+      return reply.status(204).send();
     },
   });
 };

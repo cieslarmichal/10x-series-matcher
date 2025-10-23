@@ -1,4 +1,4 @@
-import { eq, and, inArray, or, type SQL } from 'drizzle-orm';
+import { eq, and, inArray, or, count, type SQL } from 'drizzle-orm';
 
 import { UuidService } from '../../../../common/uuid/uuidService.ts';
 import type { Database } from '../../../../infrastructure/database/database.ts';
@@ -9,6 +9,7 @@ import type {
   FindWatchroomParams,
   FindWatchroomsParams,
   IsParticipantData,
+  RemoveParticipantData,
   WatchroomRepository,
 } from '../../domain/repositories/watchroomRepository.ts';
 import type { Watchroom } from '../../domain/types/watchroom.ts';
@@ -106,17 +107,28 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
     return this.mapToWatchroom(watchroomData, participants);
   }
 
-  public async findMany(params: FindWatchroomsParams): Promise<Watchroom[]> {
+  public async findMany(params: FindWatchroomsParams): Promise<{ watchrooms: Watchroom[]; total: number }> {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 20;
+    const offset = (page - 1) * limit;
+
     const userWatchroomIds = await this.database.db
       .select({ watchroomId: watchroomParticipants.watchroomId })
       .from(watchroomParticipants)
       .where(eq(watchroomParticipants.userId, params.ownerId));
 
     if (userWatchroomIds.length === 0) {
-      return [];
+      return { watchrooms: [], total: 0 };
     }
 
     const watchroomIds = userWatchroomIds.map((w) => w.watchroomId);
+
+    const [countResult] = await this.database.db
+      .select({ count: count() })
+      .from(watchrooms)
+      .where(inArray(watchrooms.id, watchroomIds));
+
+    const total = countResult?.count ?? 0;
 
     const watchroomsData = await this.database.db
       .select({
@@ -130,7 +142,15 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       })
       .from(watchrooms)
       .innerJoin(users, eq(watchrooms.ownerId, users.id))
-      .where(inArray(watchrooms.id, watchroomIds));
+      .where(inArray(watchrooms.id, watchroomIds))
+      .limit(limit)
+      .offset(offset);
+
+    if (watchroomsData.length === 0) {
+      return { watchrooms: [], total };
+    }
+
+    const paginatedWatchroomIds = watchroomsData.map((w) => w.id);
 
     const allParticipants = await this.database.db
       .select({
@@ -140,11 +160,13 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       })
       .from(watchroomParticipants)
       .innerJoin(users, eq(watchroomParticipants.userId, users.id))
-      .where(inArray(watchroomParticipants.watchroomId, watchroomIds));
+      .where(inArray(watchroomParticipants.watchroomId, paginatedWatchroomIds));
 
     const participantsByWatchroom = this.groupParticipantsByWatchroom(allParticipants);
 
-    return watchroomsData.map((w) => this.mapToWatchroom(w, participantsByWatchroom.get(w.id) ?? []));
+    const watchroomsResult = watchroomsData.map((w) => this.mapToWatchroom(w, participantsByWatchroom.get(w.id) ?? []));
+
+    return { watchrooms: watchroomsResult, total };
   }
 
   public async addParticipant(data: AddParticipantData): Promise<void> {
@@ -153,6 +175,14 @@ export class WatchroomRepositoryImpl implements WatchroomRepository {
       watchroomId: data.watchroomId,
       userId: data.userId,
     });
+  }
+
+  public async removeParticipant(data: RemoveParticipantData): Promise<void> {
+    await this.database.db
+      .delete(watchroomParticipants)
+      .where(
+        and(eq(watchroomParticipants.watchroomId, data.watchroomId), eq(watchroomParticipants.userId, data.userId)),
+      );
   }
 
   public async isParticipant(data: IsParticipantData): Promise<boolean> {
