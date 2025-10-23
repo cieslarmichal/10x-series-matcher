@@ -1,10 +1,5 @@
 import { apiRequest } from '../apiRequest';
-import type {
-  PublicWatchroomDetails,
-  Watchroom,
-  WatchroomDetails,
-  WatchroomWithParticipantCount,
-} from '../types/watchroom';
+import type { Watchroom, WatchroomDetails } from '../types/watchroom';
 
 export const createWatchroom = async (payload: { name: string; description?: string }): Promise<Watchroom> => {
   return apiRequest<Watchroom>('/watchrooms', {
@@ -13,14 +8,26 @@ export const createWatchroom = async (payload: { name: string; description?: str
   });
 };
 
-export const getMyWatchrooms = async (): Promise<WatchroomWithParticipantCount[]> => {
-  return apiRequest<WatchroomWithParticipantCount[]>('/watchrooms', {
+export const getMyWatchrooms = async (
+  page: number = 1,
+  pageSize: number = 20,
+): Promise<{ data: Watchroom[]; metadata: { page: number; pageSize: number; total: number } }> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+  });
+
+  return apiRequest<{
+    data: Watchroom[];
+    metadata: { page: number; pageSize: number; total: number };
+  }>('/watchrooms', {
     method: 'GET',
+    params,
   });
 };
 
-export const getPublicWatchroomDetails = async (publicLinkId: string): Promise<PublicWatchroomDetails> => {
-  return apiRequest<PublicWatchroomDetails>(`/watchrooms/by-link/${publicLinkId}`, {
+export const getPublicWatchroomDetails = async (publicLinkId: string): Promise<Watchroom> => {
+  return apiRequest<Watchroom>(`/watchrooms/by-link/${publicLinkId}`, {
     method: 'GET',
     requiresAuth: false,
   });
@@ -35,5 +42,17 @@ export const joinWatchroom = async (publicLinkId: string): Promise<Watchroom> =>
 export const getWatchroomDetails = async (watchroomId: string): Promise<WatchroomDetails> => {
   return apiRequest<WatchroomDetails>(`/watchrooms/${watchroomId}`, {
     method: 'GET',
+  });
+};
+
+export const removeParticipant = async (watchroomId: string, participantId: string): Promise<void> => {
+  return apiRequest<void>(`/watchrooms/${watchroomId}/participants/${participantId}`, {
+    method: 'DELETE',
+  });
+};
+
+export const leaveWatchroom = async (watchroomId: string): Promise<void> => {
+  return apiRequest<void>(`/watchrooms/${watchroomId}/leave`, {
+    method: 'POST',
   });
 };

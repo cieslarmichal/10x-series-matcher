@@ -1,17 +1,17 @@
 import { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Users } from 'lucide-react';
+import { Users, UserPlus, Sparkles } from 'lucide-react';
 
 import { AuthContext } from '../context/AuthContext';
 import { getPublicWatchroomDetails, joinWatchroom } from '../api/queries/watchroom';
-import type { PublicWatchroomDetails } from '../api/types/watchroom';
+import type { Watchroom } from '../api/types/watchroom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 
 export default function JoinRoomPage() {
   const { publicLinkId } = useParams<{ publicLinkId: string }>();
-  const [room, setRoom] = useState<PublicWatchroomDetails | null>(null);
+  const [room, setRoom] = useState<Watchroom | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const { userData } = useContext(AuthContext);
@@ -29,7 +29,7 @@ export default function JoinRoomPage() {
       setIsLoading(true);
       const fetchedRoom = await getPublicWatchroomDetails(id);
       setRoom(fetchedRoom);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load watch room details.');
     } finally {
       setIsLoading(false);
@@ -52,7 +52,18 @@ export default function JoinRoomPage() {
       toast.success('Successfully joined the watch room!');
       navigate(`/watchrooms/${watchroom.id}`);
     } catch (error) {
-      toast.error('Failed to join the watch room.');
+      // Check if user is already a participant (409 conflict)
+      if (error instanceof Error && error.message.includes('HTTP 409')) {
+        toast.info('You are already a member of this room!', {
+          description: 'Redirecting to the room...',
+        });
+        // Navigate to the room since they're already in it
+        if (room) {
+          setTimeout(() => navigate(`/watchrooms/${room.id}`), 1000);
+        }
+      } else {
+        toast.error('Failed to join the watch room.');
+      }
     } finally {
       setIsJoining(false);
     }
@@ -87,26 +98,66 @@ export default function JoinRoomPage() {
     );
   }
 
+  const ownerParticipant = room.participants.find((p) => p.id === room.ownerId);
+  const ownerName = ownerParticipant?.name || 'Unknown';
+  const participantCount = room.participants.length;
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Join {room.name}</CardTitle>
-          <CardDescription>You have been invited by {room.ownerName} to join this watch room.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {room.description && <p className="text-sm text-muted-foreground">{room.description}</p>}
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Users className="w-4 h-4 mr-2" />
-            {room.participantCount} {room.participantCount === 1 ? 'participant' : 'participants'}
+    <div className="min-h-screen bg-background flex items-start justify-center p-4 py-12 md:py-16">
+      <Card className="w-full max-w-lg border-2 shadow-lg">
+        <CardHeader className="text-center pb-6">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <UserPlus className="w-8 h-8 text-primary" />
           </div>
-          <Button
-            onClick={handleJoin}
-            className="w-full"
-            disabled={isJoining}
-          >
-            {isJoining ? 'Joining...' : userData ? 'Join Watch Room' : 'Login to Join'}
-          </Button>
+          <CardTitle className="text-2xl font-bold">Join {room.name}</CardTitle>
+          <CardDescription className="text-base mt-2">
+            You have been invited by <span className="font-semibold text-foreground">{ownerName}</span> to join this
+            watch room.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {room.description && (
+            <div className="p-4 rounded-lg bg-muted/50 border">
+              <p className="text-sm font-medium mb-1 text-muted-foreground">Room Description</p>
+              <p className="text-sm">{room.description}</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-secondary/50">
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-bold">{participantCount}</span>
+              <span className="text-sm text-muted-foreground">
+                {participantCount === 1 ? 'participant' : 'participants'}
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <Button
+              onClick={handleJoin}
+              className="w-full h-12 text-base font-semibold"
+              size="lg"
+              disabled={isJoining}
+            >
+              {isJoining ? (
+                <>
+                  <Sparkles className="w-5 h-5 mr-2 animate-pulse" />
+                  Joining...
+                </>
+              ) : userData ? (
+                <>
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Join Watch Room
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Login to Join
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

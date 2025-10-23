@@ -5,10 +5,7 @@ export interface Watchroom {
   readonly ownerId: string;
   readonly publicLinkId: string;
   readonly createdAt: string;
-}
-
-export interface WatchroomWithParticipantCount extends Watchroom {
-  readonly participantCount: number;
+  readonly participants: WatchroomParticipant[];
 }
 
 export interface WatchroomParticipant {
@@ -18,6 +15,10 @@ export interface WatchroomParticipant {
 
 export interface WatchroomDetails extends Watchroom {
   readonly participants: WatchroomParticipant[];
+}
+
+export interface WatchroomWithParticipantCount extends Watchroom {
+  readonly participantCount: number;
 }
 
 export interface PublicWatchroomDetails {

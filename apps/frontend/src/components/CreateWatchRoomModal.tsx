@@ -53,7 +53,7 @@ export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProp
       setOpen(false);
       form.reset();
       onRoomCreated();
-    } catch (error) {
+    } catch {
       toast.error('Failed to create watch room. Please try again.');
     }
   }
@@ -109,6 +109,10 @@ export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProp
                       {...field}
                     />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Tip: Add preferences for AI recommendations (e.g., "something light and funny" or "dark thriller
+                    series")
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

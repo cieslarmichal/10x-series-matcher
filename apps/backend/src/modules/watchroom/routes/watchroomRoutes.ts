@@ -242,7 +242,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
-  fastify.delete('/watchrooms/:watchroomId/leave', {
+  fastify.post('/watchrooms/:watchroomId/leave', {
     schema: {
       params: Type.Object({
         watchroomId: Type.String({ format: 'uuid' }),
