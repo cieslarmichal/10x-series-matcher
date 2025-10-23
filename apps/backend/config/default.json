@@ -21,7 +21,7 @@
   "token": {
     "access": {
       "secret": null,
-      "expiresIn": 600
+      "expiresIn": 900
     },
     "refresh": {
       "secret": null,

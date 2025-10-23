@@ -34,7 +34,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     setAccessToken(newAccessToken);
   }, []);
 
-  // Silent refresh - refresh token every 5 minutes to prevent expiration
+  // Silent refresh - refresh token every 10 minutes to prevent expiration
   useEffect(() => {
     let refreshInterval: NodeJS.Timeout | null = null;
 
@@ -42,14 +42,13 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       refreshInterval = setInterval(
         async () => {
           try {
-            console.log('Silent token refresh...');
             const tokenResponse = await refreshToken();
             setAccessToken(tokenResponse.accessToken);
           } catch (error) {
             console.error('Silent refresh failed:', error);
           }
         },
-        5 * 60 * 1000,
+        10 * 60 * 1000,
       );
     }
 
