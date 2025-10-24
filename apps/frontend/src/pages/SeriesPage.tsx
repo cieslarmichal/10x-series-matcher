@@ -13,11 +13,6 @@ export default function SeriesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Scroll to top when page loads
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
     const loadSeries = async () => {
       try {
         const response = await getMyFavoriteSeries();

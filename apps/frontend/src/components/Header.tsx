@@ -5,6 +5,7 @@ import { cn } from '../lib/utils';
 import { User, LogOut, Heart, Users, Menu, X } from 'lucide-react';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@/components/ui/Menubar';
 import { Button } from './ui/Button';
+import { Skeleton } from './ui/Skeleton';
 
 const sections = [
   { name: 'Home', href: '/' },
@@ -13,7 +14,7 @@ const sections = [
 ];
 
 export default function Header() {
-  const { userData } = useContext(AuthContext);
+  const { userData, userDataInitialized } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -68,7 +69,12 @@ export default function Header() {
 
         {/* Desktop Auth Section */}
         <div className="hidden md:flex flex-shrink-0 items-center ml-auto">
-          {userData ? (
+          {!userDataInitialized ? (
+            <div className="flex items-center gap-2 lg:gap-3">
+              {/* Gentle avatar placeholder while auth initializes */}
+              <Skeleton className="h-10 w-10 rounded-full bg-muted" />
+            </div>
+          ) : userData ? (
             <div className="flex items-center justify-end">
               <Menubar className="rounded-none space-x-0 border-none data-[state=open]:!bg-none">
                 <MenubarMenu>
@@ -144,7 +150,9 @@ export default function Header() {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-2">
-          {userData ? (
+          {!userDataInitialized ? (
+            <Skeleton className="h-8 w-8 rounded-full bg-muted" />
+          ) : userData ? (
             <div className="flex items-center gap-2">
               <Menubar className="rounded-none space-x-0 border-none data-[state=open]:!bg-none">
                 <MenubarMenu>
@@ -244,7 +252,7 @@ export default function Header() {
                 );
               })}
 
-            {!userData && (
+            {userDataInitialized && !userData && (
               <div className="pt-2 border-t border-border">
                 <button
                   onClick={() => {

@@ -60,11 +60,6 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    // Scroll to top when page loads
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
     const loadUserDetails = async () => {
       try {
         const [user, favoriteSeries, watchrooms] = await Promise.all([

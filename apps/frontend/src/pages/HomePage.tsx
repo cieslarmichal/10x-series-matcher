@@ -12,11 +12,6 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Scroll to top when page loads
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
     const loadFavoritesCount = async () => {
       if (!userData) return;
 

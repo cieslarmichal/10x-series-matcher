@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
 import { User } from '../api/types/user';
 import { getMyUser } from '../api/queries/getMyUser';
 import { logoutUser } from '../api/queries/logout';
-import { refreshToken } from '../api/queries/refreshToken';
-import { setTokenRefreshCallback, setAccessTokenGetter } from '../api/apiRequest';
+import { requestAccessTokenRefresh, setTokenRefreshCallback, setAccessTokenGetter } from '../api/apiRequest';
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<User | null>(null);
@@ -36,13 +35,13 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
 
   // Silent refresh - refresh token every 10 minutes to prevent expiration
   useEffect(() => {
-    let refreshInterval: NodeJS.Timeout | null = null;
+    let refreshInterval: ReturnType<typeof setInterval> | null = null;
 
     if (accessToken) {
       refreshInterval = setInterval(
         async () => {
           try {
-            const tokenResponse = await refreshToken();
+            const tokenResponse = await requestAccessTokenRefresh();
             setAccessToken(tokenResponse.accessToken);
           } catch (error) {
             console.error('Silent refresh failed:', error);
@@ -59,20 +58,24 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [accessToken]);
 
+  // Keep the token update callback stable and set once
   useEffect(() => {
     setTokenRefreshCallback((newToken: string) => {
       updateAccessToken(newToken);
     });
+  }, [updateAccessToken]);
 
+  // Update the access token getter whenever the token changes
+  useEffect(() => {
     setAccessTokenGetter(() => accessToken);
-  }, [updateAccessToken, accessToken]);
+  }, [accessToken]);
 
   // Try to refresh token on app initialization
   useEffect(() => {
     const initializeAuth = async () => {
       if (!accessToken) {
         try {
-          const tokenResponse = await refreshToken();
+          const tokenResponse = await requestAccessTokenRefresh();
           setAccessToken(tokenResponse.accessToken);
         } catch {
           console.log('No valid refresh token available - user needs to log in');
@@ -97,25 +100,22 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           setUserData(null);
           setUserDataInitialized(true);
         }
-      } else if (!accessToken) {
-        setUserDataInitialized(true);
       }
     };
 
     fetchUserData();
   }, [userData, accessToken]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        userData,
-        userDataInitialized,
-        clearUserData,
-        refreshUserData,
-        accessToken,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      userData,
+      userDataInitialized,
+      clearUserData,
+      refreshUserData,
+      accessToken,
+    }),
+    [userData, userDataInitialized, clearUserData, refreshUserData, accessToken],
   );
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

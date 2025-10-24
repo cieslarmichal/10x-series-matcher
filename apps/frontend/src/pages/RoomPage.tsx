@@ -48,7 +48,6 @@ export default function RoomPage() {
   };
 
   useEffect(() => {
-    window.scrollTo(0, 0);
     if (watchroomId) {
       fetchRoomDetails(watchroomId);
     }

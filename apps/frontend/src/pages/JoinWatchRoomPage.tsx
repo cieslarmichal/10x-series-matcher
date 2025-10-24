@@ -18,7 +18,6 @@ export default function JoinWatchRoomPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
     if (publicLinkId) {
       fetchRoomDetails(publicLinkId);
     }

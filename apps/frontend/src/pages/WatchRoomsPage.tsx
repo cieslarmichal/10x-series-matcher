@@ -35,7 +35,6 @@ export default function WatchRoomsPage() {
   };
 
   useEffect(() => {
-    window.scrollTo(0, 0);
     fetchRooms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
