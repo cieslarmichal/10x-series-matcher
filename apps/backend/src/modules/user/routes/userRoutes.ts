@@ -64,7 +64,6 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     string,
     { result: { accessToken: string; refreshToken: string }; timestamp: number }
   >();
-  const REFRESH_IDEMPOTENCY_WINDOW_MS = 5000; // 5s grace window to tolerate near-duplicate requests
 
   const mapUserToResponse = (user: User): Static<typeof userSchema> => {
     const userResponse: Static<typeof userSchema> = {
@@ -205,7 +204,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       // Short-circuit for very recent duplicate refresh attempts (e.g., rapid page reloads)
       const recent = recentRefreshes.get(tokenHash);
       const now = Date.now();
-      if (recent && now - recent.timestamp <= REFRESH_IDEMPOTENCY_WINDOW_MS) {
+      if (recent && now - recent.timestamp <= config.token.refresh.idempotencyMs) {
         reply.setCookie(refreshTokenCookie.name, recent.result.refreshToken, refreshTokenCookie.config);
         return reply.send({ accessToken: recent.result.accessToken });
       }
@@ -226,7 +225,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
         // Opportunistic cleanup of stale recent entries
         for (const [key, entry] of recentRefreshes) {
-          if (now - entry.timestamp > REFRESH_IDEMPOTENCY_WINDOW_MS) {
+          if (now - entry.timestamp > config.token.refresh.idempotencyMs) {
             recentRefreshes.delete(key);
           }
         }
