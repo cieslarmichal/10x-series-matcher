@@ -38,6 +38,18 @@ const configSchema = Type.Object({
     apiKey: Type.String({ minLength: 1 }),
     baseUrl: Type.String({ minLength: 1 }),
   }),
+  openRouter: Type.Object({
+    apiKey: Type.String({ minLength: 1 }),
+    baseUrl: Type.String({ minLength: 1 }),
+    model: Type.String({ minLength: 1 }),
+    temperature: Type.Number({ minimum: 0, maximum: 2 }),
+    maxTokens: Type.Number({ minimum: 1 }),
+    maxMessageLength: Type.Number({ minimum: 1000, maximum: 1000000 }),
+    maxRetries: Type.Number({ minimum: 1, maximum: 10 }),
+    retryDelayMs: Type.Number({ minimum: 100, maximum: 10000 }),
+    requestTimeoutMs: Type.Number({ minimum: 5000, maximum: 120000 }),
+    maxRetryDelayMs: Type.Number({ minimum: 5000, maximum: 120000 }),
+  }),
 });
 
 export type Config = Static<typeof configSchema>;

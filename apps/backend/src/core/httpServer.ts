@@ -18,6 +18,7 @@ import { serializeError } from '../common/errors/serializeError.ts';
 import { UnauthorizedAccessError } from '../common/errors/unathorizedAccessError.ts';
 import { httpStatusCodes } from '../common/http/httpStatusCode.ts';
 import { type LoggerService } from '../common/logger/loggerService.ts';
+import { OpenRouterService } from '../common/openRouter/openRouterService.ts';
 import type { Database } from '../infrastructure/database/database.ts';
 import { seriesRoutes } from '../modules/series/routes/seriesRoutes.ts';
 import { userRoutes } from '../modules/user/routes/userRoutes.ts';
@@ -236,6 +237,7 @@ export class HttpServer {
 
   private async registerRoutes(): Promise<void> {
     const tokenService = new TokenService(this.config);
+    const openRouterService = new OpenRouterService(this.config.openRouter, this.loggerService);
 
     await this.fastifyServer.register(userRoutes, {
       database: this.database,
@@ -254,6 +256,7 @@ export class HttpServer {
       database: this.database,
       tokenService,
       loggerService: this.loggerService,
+      openRouterService,
     });
 
     this.fastifyServer.get('/health', async (_request, reply) => {

@@ -4,7 +4,9 @@ import { createAuthenticationMiddleware } from '../../../common/auth/authMiddlew
 import type { TokenService } from '../../../common/auth/tokenService.ts';
 import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
+import type { OpenRouterService } from '../../../common/openRouter/openRouterService.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
+import { FavoriteSeriesRepositoryImpl } from '../../user/infrastructure/repositories/favoriteSeriesRepositoryImpl.ts';
 import { CreateWatchroomAction } from '../application/actions/createWatchroomAction.ts';
 import { DeleteRecommendationAction } from '../application/actions/deleteRecommendationAction.ts';
 import { DeleteWatchroomAction } from '../application/actions/deleteWatchroomAction.ts';
@@ -50,11 +52,13 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   database: Database;
   tokenService: TokenService;
   loggerService: LoggerService;
+  openRouterService: OpenRouterService;
 }> = async function (fastify, opts) {
-  const { database, tokenService, loggerService } = opts;
+  const { database, tokenService, loggerService, openRouterService } = opts;
 
   const watchroomRepository = new WatchroomRepositoryImpl(database);
   const recommendationRepository = new RecommendationRepositoryImpl(database);
+  const favoriteSeriesRepository = new FavoriteSeriesRepositoryImpl(database);
 
   const createWatchroomAction = new CreateWatchroomAction(watchroomRepository, loggerService);
   const findUserWatchroomsAction = new FindUserWatchroomsAction(watchroomRepository);
@@ -68,6 +72,8 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   const generateRecommendationsAction = new GenerateRecommendationsAction(
     watchroomRepository,
     recommendationRepository,
+    favoriteSeriesRepository,
+    openRouterService,
     loggerService,
   );
   const findRecommendationsAction = new FindRecommendationsAction(watchroomRepository, recommendationRepository);

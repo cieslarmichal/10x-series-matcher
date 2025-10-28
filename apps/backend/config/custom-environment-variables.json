@@ -16,5 +16,8 @@
   },
   "tmdb": {
     "apiKey": "TMDB_API_KEY"
+  },
+  "openRouter": {
+    "apiKey": "OPENROUTER_API_KEY"
   }
 }

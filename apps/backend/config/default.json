@@ -33,5 +33,17 @@
   "tmdb": {
     "apiKey": null,
     "baseUrl": "https://api.themoviedb.org/3"
+  },
+  "openRouter": {
+    "apiKey": null,
+    "baseUrl": "https://openrouter.ai/api/v1",
+    "model": "openai/gpt-4o-mini",
+    "temperature": 0.8,
+    "maxTokens": 2500,
+    "maxMessageLength": 100000,
+    "maxRetries": 3,
+    "retryDelayMs": 1000,
+    "requestTimeoutMs": 30000,
+    "maxRetryDelayMs": 30000
   }
 }
