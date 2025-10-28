@@ -6,19 +6,30 @@ import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAcces
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
 import { CreateWatchroomAction } from '../application/actions/createWatchroomAction.ts';
+import { DeleteRecommendationAction } from '../application/actions/deleteRecommendationAction.ts';
 import { DeleteWatchroomAction } from '../application/actions/deleteWatchroomAction.ts';
 import { FindPublicWatchroomDetailsAction } from '../application/actions/findPublicWatchroomDetailsAction.ts';
+import { FindRecommendationsAction } from '../application/actions/findRecommendationsAction.ts';
 import { FindUserWatchroomsAction } from '../application/actions/findUserWatchroomsAction.ts';
 import { FindWatchroomDetailsAction } from '../application/actions/findWatchroomDetailsAction.ts';
+import { GenerateRecommendationsAction } from '../application/actions/generateRecommendationsAction.ts';
 import { JoinWatchroomAction } from '../application/actions/joinWatchroomAction.ts';
 import { LeaveWatchroomAction } from '../application/actions/leaveWatchroomAction.ts';
 import { RemoveParticipantAction } from '../application/actions/removeParticipantAction.ts';
 import { UpdateWatchroomAction } from '../application/actions/updateWatchroomAction.ts';
+import type { Recommendation } from '../domain/types/recommendation.ts';
 import type { Watchroom } from '../domain/types/watchroom.ts';
+import { RecommendationRepositoryImpl } from '../infrastructure/repositories/recommendationRepositoryImpl.ts';
 import { WatchroomRepositoryImpl } from '../infrastructure/repositories/watchroomRepositoryImpl.ts';
 
 const watchroomNameSchema = Type.String({ minLength: 1, maxLength: 64 });
 const watchroomDescriptionSchema = Type.String({ maxLength: 256 });
+
+const recommendationSchema = Type.Object({
+  id: Type.String({ format: 'uuid' }),
+  seriesTmdbId: Type.Integer(),
+  justification: Type.String(),
+});
 
 const watchroomSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
@@ -43,6 +54,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   const { database, tokenService, loggerService } = opts;
 
   const watchroomRepository = new WatchroomRepositoryImpl(database);
+  const recommendationRepository = new RecommendationRepositoryImpl(database);
 
   const createWatchroomAction = new CreateWatchroomAction(watchroomRepository, loggerService);
   const findUserWatchroomsAction = new FindUserWatchroomsAction(watchroomRepository);
@@ -53,6 +65,17 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   const deleteWatchroomAction = new DeleteWatchroomAction(watchroomRepository, loggerService);
   const removeParticipantAction = new RemoveParticipantAction(watchroomRepository, loggerService);
   const leaveWatchroomAction = new LeaveWatchroomAction(watchroomRepository, loggerService);
+  const generateRecommendationsAction = new GenerateRecommendationsAction(
+    watchroomRepository,
+    recommendationRepository,
+    loggerService,
+  );
+  const findRecommendationsAction = new FindRecommendationsAction(watchroomRepository, recommendationRepository);
+  const deleteRecommendationAction = new DeleteRecommendationAction(
+    watchroomRepository,
+    recommendationRepository,
+    loggerService,
+  );
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
 
@@ -71,6 +94,14 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     }
 
     return response;
+  };
+
+  const mapRecommendationToResponse = (recommendation: Recommendation): Static<typeof recommendationSchema> => {
+    return {
+      id: recommendation.id,
+      seriesTmdbId: recommendation.seriesTmdbId,
+      justification: recommendation.justification,
+    };
   };
 
   fastify.post('/watchrooms', {
@@ -336,6 +367,99 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
       const { watchroomId } = request.params;
 
       await leaveWatchroomAction.execute({
+        watchroomId,
+        userId,
+      });
+
+      return reply.status(204).send();
+    },
+  });
+
+  fastify.post('/watchrooms/:watchroomId/recommendations', {
+    schema: {
+      params: Type.Object({
+        watchroomId: Type.String({ format: 'uuid' }),
+      }),
+      response: {
+        202: Type.Object({
+          message: Type.String(),
+        }),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { watchroomId } = request.params;
+
+      await generateRecommendationsAction.execute({
+        watchroomId,
+        userId,
+      });
+
+      return reply.status(202).send({
+        message: 'Recommendation generation started. Results will be available shortly.',
+      });
+    },
+  });
+
+  fastify.get('/watchrooms/:watchroomId/recommendations', {
+    schema: {
+      params: Type.Object({
+        watchroomId: Type.String({ format: 'uuid' }),
+      }),
+      response: {
+        200: Type.Array(recommendationSchema),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { watchroomId } = request.params;
+
+      const recommendations = await findRecommendationsAction.execute({
+        watchroomId,
+        userId,
+      });
+
+      return reply.send(recommendations.map(mapRecommendationToResponse));
+    },
+  });
+
+  fastify.delete('/watchrooms/:watchroomId/recommendations/:recommendationId', {
+    schema: {
+      params: Type.Object({
+        watchroomId: Type.String({ format: 'uuid' }),
+        recommendationId: Type.String({ format: 'uuid' }),
+      }),
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { watchroomId, recommendationId } = request.params;
+
+      await deleteRecommendationAction.execute({
+        recommendationId,
         watchroomId,
         userId,
       });

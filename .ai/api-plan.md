@@ -488,13 +488,11 @@ GET /watchrooms/:watchroomId
 PATCH /watchrooms/:watchroomId
 DELETE /watchrooms/:watchroomId/participants/me
 DELETE /watchrooms/:watchroomId/participants/:userId
+POST /watchrooms/:watchroomId/recommendations
+GET /watchrooms/:watchroomId/recommendations
+DELETE /watchrooms/:watchroomId/recommendations/:recommendationId
 3. Series Module
 This module acts as a proxy to the external TMDB API. It handles searching for series and retrieving detailed series information.
 Endpoints:
 GET /series/search
 GET /series/:seriesTmdbId
-4. Recommendation Module
-While the recommendation endpoint is nested under the watchroom's path, the logic for generating AI recommendations is a distinct domain. Creating a separate module for it promotes separation of concerns and would make the system easier to maintain as the recommendation logic grows.
-Endpoints:
-POST /watchrooms/:watchroomId/recommendations
-Each of these new modules (watchroom, series, recommendation) would follow the same internal structure as the user module, with application, domain, infrastructure, and routes directories
