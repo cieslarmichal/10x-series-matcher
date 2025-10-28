@@ -1,9 +1,6 @@
 import { Type, type Static, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import {
-  createAuthenticationMiddleware,
-  createParamsAuthorizationMiddleware,
-} from '../../../common/auth/authMiddleware.ts';
+import { createAuthenticationMiddleware } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
 import { CryptoService } from '../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
@@ -116,7 +113,6 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   const removeFavoriteSeriesAction = new RemoveFavoriteSeriesAction(favoriteSeriesRepository);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
-  const authorizationMiddleware = createParamsAuthorizationMiddleware();
 
   fastify.post('/users/register', {
     schema: {
@@ -260,22 +256,25 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
-  fastify.delete('/users/:userId', {
+  fastify.delete('/users/me', {
     schema: {
-      params: Type.Object({
-        userId: Type.String({ format: 'uuid' }),
-      }),
       response: {
         204: Type.Null(),
       },
     },
-    preHandler: [authenticationMiddleware, authorizationMiddleware],
+    preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const refreshToken = request.cookies[refreshTokenCookie.name];
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
 
-      const { userId } = request.params;
+      const { userId } = request.user;
 
       await deleteUserAction.execute(userId);
+
+      const refreshToken = request.cookies[refreshTokenCookie.name];
 
       if (refreshToken) {
         reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });

@@ -87,7 +87,7 @@ export default function ProfilePage() {
     }
 
     try {
-      await deleteUser(user.id);
+      await deleteUser();
       toast.success('Account deleted successfully');
       await clearUserData();
       navigate('/');
