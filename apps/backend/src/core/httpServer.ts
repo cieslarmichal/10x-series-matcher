@@ -257,6 +257,7 @@ export class HttpServer {
       tokenService,
       loggerService: this.loggerService,
       openRouterService,
+      config: this.config,
     });
 
     this.fastifyServer.get('/health', async (_request, reply) => {

@@ -43,7 +43,7 @@ export class LeaveWatchroomAction {
       });
     }
 
-    const isParticipant = await this.watchroomRepository.isParticipant(watchroomId, userId);
+    const isParticipant = watchroom.participants.some((p) => p.id === userId);
 
     if (!isParticipant) {
       throw new ResourceNotFoundError({

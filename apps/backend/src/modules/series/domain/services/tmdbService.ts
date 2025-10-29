@@ -1,4 +1,4 @@
-import type { SeriesDetails, SeriesSearchResult } from '../types/series.ts';
+import type { SeriesDetails, SeriesSearchResult, SeriesExternalIds } from '../types/series.ts';
 
 export interface SearchSeriesParams {
   readonly query: string;
@@ -8,4 +8,5 @@ export interface SearchSeriesParams {
 export interface TmdbService {
   searchSeries(params: SearchSeriesParams): Promise<SeriesSearchResult>;
   getSeriesDetails(seriesTmdbId: number): Promise<SeriesDetails>;
+  getSeriesExternalIds(seriesTmdbId: number): Promise<SeriesExternalIds>;
 }

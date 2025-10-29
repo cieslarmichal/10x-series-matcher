@@ -5,8 +5,9 @@ import type { TokenService } from '../../../common/auth/tokenService.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
 import { GetSeriesDetailsAction } from '../application/actions/getSeriesDetailsAction.ts';
+import { GetSeriesExternalIdsAction } from '../application/actions/getSeriesExternalIdsAction.ts';
 import { SearchSeriesAction } from '../application/actions/searchSeriesAction.ts';
-import type { Series, SeriesDetails } from '../domain/types/series.ts';
+import type { Series, SeriesDetails, SeriesExternalIds } from '../domain/types/series.ts';
 import { TmdbServiceImpl } from '../infrastructure/services/tmdbServiceImpl.ts';
 
 const seriesSchema = Type.Object({
@@ -30,6 +31,14 @@ const seriesDetailsSchema = Type.Object({
   numberOfEpisodes: Type.Number(),
   status: Type.String(),
   voteAverage: Type.Number(),
+});
+
+const seriesExternalIdsSchema = Type.Object({
+  imdbId: Type.Union([Type.String(), Type.Null()]),
+  tvdbId: Type.Union([Type.Number(), Type.Null()]),
+  facebookId: Type.Union([Type.String(), Type.Null()]),
+  instagramId: Type.Union([Type.String(), Type.Null()]),
+  twitterId: Type.Union([Type.String(), Type.Null()]),
 });
 
 const seriesSearchResultSchema = Type.Object({
@@ -71,9 +80,18 @@ export const seriesRoutes: FastifyPluginAsyncTypebox<{
     voteAverage: details.voteAverage,
   });
 
+  const mapSeriesExternalIdsToResponse = (externalIds: SeriesExternalIds): Static<typeof seriesExternalIdsSchema> => ({
+    imdbId: externalIds.imdbId,
+    tvdbId: externalIds.tvdbId,
+    facebookId: externalIds.facebookId,
+    instagramId: externalIds.instagramId,
+    twitterId: externalIds.twitterId,
+  });
+
   const tmdbService = new TmdbServiceImpl(config.tmdb.apiKey, config.tmdb.baseUrl);
   const searchSeriesAction = new SearchSeriesAction(tmdbService);
   const getSeriesDetailsAction = new GetSeriesDetailsAction(tmdbService);
+  const getSeriesExternalIdsAction = new GetSeriesExternalIdsAction(tmdbService);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
 
@@ -120,6 +138,25 @@ export const seriesRoutes: FastifyPluginAsyncTypebox<{
       const details = await getSeriesDetailsAction.execute(seriesTmdbId);
 
       return reply.send(mapSeriesDetailsToResponse(details));
+    },
+  });
+
+  fastify.get('/series/:seriesTmdbId/external-ids', {
+    schema: {
+      params: Type.Object({
+        seriesTmdbId: Type.Number({ minimum: 1 }),
+      }),
+      response: {
+        200: seriesExternalIdsSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      const { seriesTmdbId } = request.params;
+
+      const externalIds = await getSeriesExternalIdsAction.execute(seriesTmdbId);
+
+      return reply.send(mapSeriesExternalIdsToResponse(externalIds));
     },
   });
 };

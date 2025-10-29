@@ -2,14 +2,19 @@ import { ForbiddenAccessError } from '../../../../common/errors/forbiddenAccessE
 import { ResourceNotFoundError } from '../../../../common/errors/resourceNotFoundError.ts';
 import type { RecommendationRepository } from '../../domain/repositories/recommendationRepository.ts';
 import type { WatchroomRepository } from '../../domain/repositories/watchroomRepository.ts';
-import type { Recommendation } from '../../domain/types/recommendation.ts';
 
-export interface FindRecommendationsActionPayload {
+export interface CheckRecommendationStatusActionPayload {
+  readonly requestId: string;
   readonly watchroomId: string;
   readonly userId: string;
 }
 
-export class FindRecommendationsAction {
+export interface CheckRecommendationStatusActionResult {
+  readonly status: 'pending' | 'completed';
+  readonly count: number;
+}
+
+export class CheckRecommendationStatusAction {
   private readonly watchroomRepository: WatchroomRepository;
   private readonly recommendationRepository: RecommendationRepository;
 
@@ -18,8 +23,10 @@ export class FindRecommendationsAction {
     this.recommendationRepository = recommendationRepository;
   }
 
-  public async execute(payload: FindRecommendationsActionPayload): Promise<Recommendation[]> {
-    const { watchroomId, userId } = payload;
+  public async execute(
+    payload: CheckRecommendationStatusActionPayload,
+  ): Promise<CheckRecommendationStatusActionResult> {
+    const { requestId, watchroomId, userId } = payload;
 
     const watchroom = await this.watchroomRepository.findOne({ id: watchroomId });
 
@@ -30,16 +37,19 @@ export class FindRecommendationsAction {
       });
     }
 
-    const isParticipant = watchroom.participants.some((p) => p.id === userId);
+    const isOwner = watchroom.ownerId === userId;
 
-    if (!isParticipant) {
+    if (!isOwner) {
       throw new ForbiddenAccessError({
-        reason: 'Only watchroom participants can view recommendations',
+        reason: 'User is not the owner of this watchroom',
       });
     }
 
-    const recommendations = await this.recommendationRepository.findByWatchroomId(watchroomId);
+    const recommendations = await this.recommendationRepository.findByRequestId(requestId);
 
-    return recommendations;
+    return {
+      status: recommendations.length > 0 ? 'completed' : 'pending',
+      count: recommendations.length,
+    };
   }
 }

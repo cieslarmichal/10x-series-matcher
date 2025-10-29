@@ -82,11 +82,13 @@ export const recommendations = pgTable(
     watchroomId: uuid('watchroom_id')
       .notNull()
       .references(() => watchrooms.id, { onDelete: 'cascade' }),
+    requestId: uuid('request_id').notNull(),
     seriesTmdbId: integer('series_tmdb_id').notNull(),
     justification: text('justification').notNull(),
   },
   (table) => [
     index('idx_recommendations_watchroom_id').on(table.watchroomId),
     index('idx_recommendations_series_tmdb_id').on(table.seriesTmdbId),
+    index('idx_recommendations_request_id').on(table.requestId),
   ],
 );

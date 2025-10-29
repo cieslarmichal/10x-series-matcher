@@ -1,5 +1,6 @@
 import { apiRequest } from '../apiRequest';
 import type { Watchroom, WatchroomDetails } from '../types/watchroom';
+import type { Recommendation } from '../types/recommendation';
 
 export const createWatchroom = async (payload: { name: string; description?: string }): Promise<Watchroom> => {
   return apiRequest<Watchroom>('/watchrooms', {
@@ -70,5 +71,35 @@ export const updateWatchroom = async (
   return apiRequest<Watchroom>(`/watchrooms/${watchroomId}`, {
     method: 'PATCH',
     body: payload,
+  });
+};
+
+export const generateRecommendations = async (watchroomId: string): Promise<{ requestId: string; message: string }> => {
+  return apiRequest<{ requestId: string; message: string }>(`/watchrooms/${watchroomId}/recommendations`, {
+    method: 'POST',
+  });
+};
+
+export const checkRecommendationStatus = async (
+  watchroomId: string,
+  requestId: string,
+): Promise<{ status: 'pending' | 'completed'; count: number }> => {
+  return apiRequest<{ status: 'pending' | 'completed'; count: number }>(
+    `/watchrooms/${watchroomId}/recommendations/status/${requestId}`,
+    {
+      method: 'GET',
+    },
+  );
+};
+
+export const getRecommendations = async (watchroomId: string): Promise<Recommendation[]> => {
+  return apiRequest<Recommendation[]>(`/watchrooms/${watchroomId}/recommendations`, {
+    method: 'GET',
+  });
+};
+
+export const deleteRecommendation = async (watchroomId: string, recommendationId: string): Promise<void> => {
+  return apiRequest<void>(`/watchrooms/${watchroomId}/recommendations/${recommendationId}`, {
+    method: 'DELETE',
   });
 };

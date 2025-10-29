@@ -1,7 +1,7 @@
 import { ExternalServiceError } from '../../../../common/errors/externalServiceError.ts';
 import { ResourceNotFoundError } from '../../../../common/errors/resourceNotFoundError.ts';
 import type { SearchSeriesParams, TmdbService } from '../../domain/services/tmdbService.ts';
-import type { Series, SeriesDetails, SeriesSearchResult } from '../../domain/types/series.ts';
+import type { Series, SeriesDetails, SeriesSearchResult, SeriesExternalIds } from '../../domain/types/series.ts';
 
 interface TmdbApiSeriesResponse {
   readonly id: number;
@@ -38,6 +38,14 @@ interface TmdbApiSeriesDetailsResponse {
   readonly number_of_episodes: number;
   readonly status: string;
   readonly vote_average: number;
+}
+
+interface TmdbApiExternalIdsResponse {
+  readonly imdb_id: string | null;
+  readonly tvdb_id: number | null;
+  readonly facebook_id: string | null;
+  readonly instagram_id: string | null;
+  readonly twitter_id: string | null;
 }
 
 export class TmdbServiceImpl implements TmdbService {
@@ -147,6 +155,51 @@ export class TmdbServiceImpl implements TmdbService {
     }
   }
 
+  public async getSeriesExternalIds(seriesTmdbId: number): Promise<SeriesExternalIds> {
+    const url = new URL(`${this.baseUrl}/tv/${seriesTmdbId.toString()}/external_ids`);
+    url.searchParams.append('api_key', this.apiKey);
+
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 404) {
+        throw new ResourceNotFoundError({
+          resource: 'Series',
+          reason: `Series with TMDB ID ${seriesTmdbId.toString()} not found`,
+          seriesTmdbId,
+        });
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new ExternalServiceError({
+          service: 'TMDB API',
+          reason: `TMDB API request failed with status ${response.status.toString()}`,
+          responseBody: errorBody,
+        });
+      }
+
+      const data = (await response.json()) as TmdbApiExternalIdsResponse;
+
+      return this.mapToSeriesExternalIds(data);
+    } catch (error) {
+      if (error instanceof ExternalServiceError || error instanceof ResourceNotFoundError) {
+        throw error;
+      }
+
+      throw new ExternalServiceError({
+        service: 'TMDB API',
+        reason: 'Failed to fetch series external IDs from TMDB API',
+        originalError: error,
+      });
+    }
+  }
+
   private mapToSeries(apiSeries: TmdbApiSeriesResponse): Series {
     const series: Series = {
       id: apiSeries.id,
@@ -176,6 +229,16 @@ export class TmdbServiceImpl implements TmdbService {
       numberOfEpisodes: apiDetails.number_of_episodes,
       status: apiDetails.status,
       voteAverage: apiDetails.vote_average,
+    };
+  }
+
+  private mapToSeriesExternalIds(apiExternalIds: TmdbApiExternalIdsResponse): SeriesExternalIds {
+    return {
+      imdbId: apiExternalIds.imdb_id,
+      tvdbId: apiExternalIds.tvdb_id,
+      facebookId: apiExternalIds.facebook_id,
+      instagramId: apiExternalIds.instagram_id,
+      twitterId: apiExternalIds.twitter_id,
     };
   }
 }

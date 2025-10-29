@@ -1,14 +1,28 @@
 import { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Copy, Users, ArrowLeft, UserMinus, LogOut, Sparkles, TvMinimalPlay, Trash2, Calendar } from 'lucide-react';
+import { Copy, Users, ArrowLeft, UserMinus, LogOut, Sparkles, TvMinimalPlay, Trash2, Calendar, X } from 'lucide-react';
 
 import { AuthContext } from '../context/AuthContext.tsx';
-import { getWatchroomDetails, removeParticipant, leaveWatchroom, deleteWatchroom } from '../api/queries/watchroom.ts';
+import {
+  getWatchroomDetails,
+  removeParticipant,
+  leaveWatchroom,
+  deleteWatchroom,
+  generateRecommendations,
+  checkRecommendationStatus,
+  getRecommendations,
+  deleteRecommendation,
+} from '../api/queries/watchroom.ts';
+import { getSeriesDetails } from '../api/queries/getSeriesDetails.ts';
+import { getSeriesExternalIds } from '../api/queries/getSeriesExternalIds.ts';
 import type { WatchroomDetails } from '../api/types/watchroom.ts';
+import type { Recommendation } from '../api/types/recommendation.ts';
+import type { SeriesDetails } from '../api/types/series.ts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card.tsx';
 import { Button } from '../components/ui/Button.tsx';
 import { Badge } from '../components/ui/Badge.tsx';
+import { Skeleton } from '../components/ui/Skeleton.tsx';
 import { EditWatchRoomModal } from '../components/EditWatchRoomModal.tsx';
 import {
   Dialog,
@@ -19,10 +33,16 @@ import {
   DialogTitle,
 } from '../components/ui/Dialog.tsx';
 
+interface RecommendationWithDetails extends Recommendation {
+  seriesDetails?: SeriesDetails;
+}
+
 export default function WatchRoomDetailsPage() {
   const { watchroomId } = useParams<{ watchroomId: string }>();
   const [room, setRoom] = useState<WatchroomDetails | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
   const [confirmRemoveDialog, setConfirmRemoveDialog] = useState<{
     open: boolean;
     participantId?: string;
@@ -48,9 +68,37 @@ export default function WatchRoomDetailsPage() {
     }
   };
 
+  const fetchRecommendations = async (id: string) => {
+    try {
+      setIsLoadingRecommendations(true);
+      const fetchedRecommendations = await getRecommendations(id);
+
+      // Fetch series details for each recommendation
+      const recommendationsWithDetails = await Promise.all(
+        fetchedRecommendations.map(async (rec) => {
+          try {
+            const seriesDetails = await getSeriesDetails(rec.seriesTmdbId);
+            return { ...rec, seriesDetails };
+          } catch {
+            // If fetching series details fails, return recommendation without details
+            return rec;
+          }
+        }),
+      );
+
+      setRecommendations(recommendationsWithDetails);
+    } catch {
+      // Silently fail - recommendations might not exist yet
+      setRecommendations([]);
+    } finally {
+      setIsLoadingRecommendations(false);
+    }
+  };
+
   useEffect(() => {
     if (watchroomId) {
       fetchRoomDetails(watchroomId);
+      fetchRecommendations(watchroomId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchroomId]);
@@ -121,19 +169,91 @@ export default function WatchRoomDetailsPage() {
 
     try {
       setIsGenerating(true);
-      // TODO: Call API to generate recommendations
+
+      // Start generation and get requestId
+      const { requestId, message } = await generateRecommendations(watchroomId);
+
       toast.success('Generating recommendations...', {
-        description: 'This may take a few moments.',
+        description: message,
       });
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.info('Feature coming soon!', {
-        description: 'AI recommendation generation will be available in the next update.',
-      });
-    } catch {
+
+      // Poll for status using requestId every 2 seconds, max 30 attempts (60 seconds total)
+      let attempts = 0;
+      const maxAttempts = 30;
+      const pollInterval = 2000;
+
+      const pollForStatus = async (): Promise<void> => {
+        attempts++;
+
+        try {
+          const statusResult = await checkRecommendationStatus(watchroomId, requestId);
+
+          if (statusResult.status === 'completed') {
+            // Fetch the actual recommendations with series details
+            await fetchRecommendations(watchroomId);
+
+            toast.success('Recommendations ready!', {
+              description: `Found ${statusResult.count} series for your group.`,
+            });
+            setIsGenerating(false);
+            return;
+          }
+        } catch (error) {
+          // If status check fails, log but continue polling
+          console.error('Status check failed:', error);
+        }
+
+        if (attempts >= maxAttempts) {
+          toast.error('Generation taking longer than expected', {
+            description: 'Please refresh the page in a moment.',
+          });
+          setIsGenerating(false);
+          return;
+        }
+
+        // Continue polling
+        setTimeout(() => pollForStatus(), pollInterval);
+      };
+
+      // Start polling after initial delay
+      setTimeout(() => pollForStatus(), pollInterval);
+    } catch (error) {
+      console.error('Failed to generate recommendations:', error);
       toast.error('Failed to generate recommendations.');
-    } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleDeleteRecommendation = async (recommendationId: string) => {
+    if (!watchroomId) {
+      return;
+    }
+
+    try {
+      await deleteRecommendation(watchroomId, recommendationId);
+      setRecommendations((prev) => prev.filter((rec) => rec.id !== recommendationId));
+      toast.success('Recommendation removed');
+    } catch {
+      toast.error('Failed to remove recommendation');
+    }
+  };
+
+  const handleOpenImdb = async (seriesTmdbId: number, event?: React.MouseEvent) => {
+    // Only handle left-click (button 0) and middle-click (button 1)
+    if (event && event.button !== 0 && event.button !== 1) {
+      return;
+    }
+
+    try {
+      const externalIds = await getSeriesExternalIds(seriesTmdbId);
+
+      if (externalIds.imdbId) {
+        window.open(`https://www.imdb.com/title/${externalIds.imdbId}`);
+      } else {
+        toast.error('IMDb ID not available for this series');
+      }
+    } catch {
+      toast.error('Failed to get IMDb link');
     }
   };
 
@@ -345,7 +465,7 @@ export default function WatchRoomDetailsPage() {
                 {isOwner && (
                   <Button
                     onClick={handleGenerateRecommendations}
-                    disabled={isGenerating || room.participants.length < 2}
+                    // disabled={isGenerating || room.participants.length < 2}
                     className="sm:self-start shadow-md hover:shadow-lg transition-all disabled:opacity-50"
                   >
                     {isGenerating ? (
@@ -364,31 +484,149 @@ export default function WatchRoomDetailsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-16 px-6">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 mx-auto mb-8 flex items-center justify-center shadow-inner">
-                  <TvMinimalPlay className="w-12 h-12 text-primary" />
+              {isLoadingRecommendations ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground px-1">Loading recommendations...</p>
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border bg-card p-5"
+                    >
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Skeleton className="h-36 w-full sm:w-24 flex-shrink-0 rounded-lg" />
+                        <div className="flex-1 space-y-3">
+                          <Skeleton className="h-6 w-3/4" />
+                          <div className="flex gap-2">
+                            <Skeleton className="h-5 w-16" />
+                            <Skeleton className="h-5 w-12" />
+                            <Skeleton className="h-5 w-16" />
+                          </div>
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-2/3" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-3">No recommendations yet</h3>
-                <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                  {isOwner ? (
-                    room.participants.length < 2 ? (
-                      <>
-                        Invite at least one more person to generate recommendations.{' '}
-                        <button
-                          onClick={handleCopyLink}
-                          className="text-primary hover:text-primary/80 underline underline-offset-2 font-semibold transition-colors cursor-pointer"
-                        >
-                          Copy invite link
-                        </button>
-                      </>
+              ) : recommendations.length === 0 ? (
+                <div className="text-center py-16 px-6">
+                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 mx-auto mb-8 flex items-center justify-center shadow-inner">
+                    <TvMinimalPlay className="w-12 h-12 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground mb-3">No recommendations yet</h3>
+                  <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                    {isOwner ? (
+                      room.participants.length < 2 ? (
+                        <>
+                          Invite at least one more person to generate recommendations.{' '}
+                          <button
+                            onClick={handleCopyLink}
+                            className="text-primary hover:text-primary/80 underline underline-offset-2 font-semibold transition-colors cursor-pointer"
+                          >
+                            Copy invite link
+                          </button>
+                        </>
+                      ) : (
+                        'Click the "Generate" button above to get AI-powered series recommendations for your group!'
+                      )
                     ) : (
-                      'Click the "Generate" button above to get AI-powered series recommendations for your group!'
-                    )
-                  ) : (
-                    'The room owner will generate recommendations when everyone has joined.'
-                  )}
-                </p>
-              </div>
+                      'The room owner will generate recommendations when everyone has joined.'
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground px-1">
+                    {recommendations.length} {recommendations.length === 1 ? 'recommendation' : 'recommendations'}{' '}
+                    generated
+                  </p>
+                  <div className="grid gap-6">
+                    {recommendations.map((recommendation) => (
+                      <div
+                        key={recommendation.id}
+                        className="group relative rounded-xl border bg-card hover:border-primary/40 hover:shadow-lg transition-all duration-200 overflow-hidden"
+                      >
+                        <div className="flex flex-col sm:flex-row gap-6 p-6">
+                          {/* Series Poster */}
+                          <Button
+                            variant="ghost"
+                            onMouseDown={(e) => handleOpenImdb(recommendation.seriesTmdbId, e)}
+                            className="flex-shrink-0 w-full sm:w-32 h-auto p-0 hover:bg-transparent"
+                          >
+                            {recommendation.seriesDetails?.posterPath ? (
+                              <img
+                                src={`https://image.tmdb.org/t/p/w300${recommendation.seriesDetails.posterPath}`}
+                                alt={`${recommendation.seriesDetails.name} poster`}
+                                className="h-48 w-full sm:w-32 object-cover rounded-lg shadow-md hover:shadow-xl transition-shadow"
+                              />
+                            ) : (
+                              <div className="h-48 w-full sm:w-32 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                                <TvMinimalPlay className="w-8 h-8 text-primary" />
+                              </div>
+                            )}
+                          </Button>
+
+                          {/* Series Details */}
+                          <div className="flex-1 min-w-0 space-y-4">
+                            <div className="space-y-2">
+                              <Button
+                                variant="ghost"
+                                onMouseDown={(e) => handleOpenImdb(recommendation.seriesTmdbId, e)}
+                                className="h-auto p-0 hover:bg-transparent justify-start"
+                              >
+                                <h4 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {recommendation.seriesDetails?.name || 'Loading...'}
+                                </h4>
+                              </Button>
+                              {recommendation.seriesDetails && (
+                                <div className="flex items-center gap-2">
+                                  {recommendation.seriesDetails.firstAirDate && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {new Date(recommendation.seriesDetails.firstAirDate).getFullYear()}
+                                    </Badge>
+                                  )}
+                                  <span className="text-xs text-muted-foreground">
+                                    ★ {recommendation.seriesDetails.voteAverage.toFixed(1)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* AI Justification */}
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-primary flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" />
+                                Why we recommend this:
+                              </p>
+                              <p className="text-sm text-muted-foreground leading-relaxed">
+                                {recommendation.justification}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Delete Button */}
+                          {isOwner && (
+                            <div className="flex sm:flex-col gap-2 sm:gap-0 justify-end sm:justify-start">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteRecommendation(recommendation.id)}
+                                className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

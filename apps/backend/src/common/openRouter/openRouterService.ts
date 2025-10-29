@@ -35,9 +35,6 @@ export class OpenRouterService {
       message: 'OpenRouterService initialized',
       model: config.model,
       baseUrl: config.baseUrl,
-      maxRetries: config.maxRetries,
-      requestTimeoutMs: config.requestTimeoutMs,
-      maxRetryDelayMs: config.maxRetryDelayMs,
     });
   }
 

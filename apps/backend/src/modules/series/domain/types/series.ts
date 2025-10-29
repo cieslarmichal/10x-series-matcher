@@ -30,3 +30,11 @@ export interface SeriesSearchResult {
   readonly totalPages: number;
   readonly totalResults: number;
 }
+
+export interface SeriesExternalIds {
+  readonly imdbId: string | null;
+  readonly tvdbId: number | null;
+  readonly facebookId: string | null;
+  readonly instagramId: string | null;
+  readonly twitterId: string | null;
+}

@@ -24,6 +24,7 @@ export class RecommendationRepositoryImpl implements RecommendationRepository {
       .values({
         id: recommendationId,
         watchroomId: data.watchroomId,
+        requestId: data.requestId,
         seriesTmdbId: data.seriesTmdbId,
         justification: data.justification,
       })
@@ -41,6 +42,15 @@ export class RecommendationRepositoryImpl implements RecommendationRepository {
       .select()
       .from(recommendations)
       .where(eq(recommendations.watchroomId, watchroomId));
+
+    return recommendationsData.map((r) => this.mapToRecommendation(r));
+  }
+
+  public async findByRequestId(requestId: string): Promise<Recommendation[]> {
+    const recommendationsData = await this.database.db
+      .select()
+      .from(recommendations)
+      .where(eq(recommendations.requestId, requestId));
 
     return recommendationsData.map((r) => this.mapToRecommendation(r));
   }
@@ -71,6 +81,7 @@ export class RecommendationRepositoryImpl implements RecommendationRepository {
     return {
       id: row.id,
       watchroomId: row.watchroomId,
+      requestId: row.requestId,
       seriesTmdbId: row.seriesTmdbId,
       justification: row.justification,
     };

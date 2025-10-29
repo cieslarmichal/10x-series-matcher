@@ -5,8 +5,12 @@ import type { TokenService } from '../../../common/auth/tokenService.ts';
 import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { OpenRouterService } from '../../../common/openRouter/openRouterService.ts';
+import { UuidService } from '../../../common/uuid/uuidService.ts';
+import type { Config } from '../../../core/config.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
+import { TmdbServiceImpl } from '../../series/infrastructure/services/tmdbServiceImpl.ts';
 import { FavoriteSeriesRepositoryImpl } from '../../user/infrastructure/repositories/favoriteSeriesRepositoryImpl.ts';
+import { CheckRecommendationStatusAction } from '../application/actions/checkRecommendationStatusAction.ts';
 import { CreateWatchroomAction } from '../application/actions/createWatchroomAction.ts';
 import { DeleteRecommendationAction } from '../application/actions/deleteRecommendationAction.ts';
 import { DeleteWatchroomAction } from '../application/actions/deleteWatchroomAction.ts';
@@ -53,12 +57,14 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   tokenService: TokenService;
   loggerService: LoggerService;
   openRouterService: OpenRouterService;
+  config: Config;
 }> = async function (fastify, opts) {
-  const { database, tokenService, loggerService, openRouterService } = opts;
+  const { database, tokenService, loggerService, openRouterService, config } = opts;
 
   const watchroomRepository = new WatchroomRepositoryImpl(database);
   const recommendationRepository = new RecommendationRepositoryImpl(database);
   const favoriteSeriesRepository = new FavoriteSeriesRepositoryImpl(database);
+  const tmdbService = new TmdbServiceImpl(config.tmdb.apiKey, config.tmdb.baseUrl);
 
   const createWatchroomAction = new CreateWatchroomAction(watchroomRepository, loggerService);
   const findUserWatchroomsAction = new FindUserWatchroomsAction(watchroomRepository);
@@ -73,6 +79,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     watchroomRepository,
     recommendationRepository,
     favoriteSeriesRepository,
+    tmdbService,
     openRouterService,
     loggerService,
   );
@@ -81,6 +88,10 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     watchroomRepository,
     recommendationRepository,
     loggerService,
+  );
+  const checkRecommendationStatusAction = new CheckRecommendationStatusAction(
+    watchroomRepository,
+    recommendationRepository,
   );
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
@@ -388,6 +399,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
       }),
       response: {
         202: Type.Object({
+          requestId: Type.String({ format: 'uuid' }),
           message: Type.String(),
         }),
       },
@@ -403,14 +415,62 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
       const { userId } = request.user;
       const { watchroomId } = request.params;
 
-      await generateRecommendationsAction.execute({
+      const requestId = UuidService.generateUuid();
+
+      // Execute in background and capture requestId
+      generateRecommendationsAction
+        .execute({
+          requestId,
+          watchroomId,
+          userId,
+        })
+        .catch((error: unknown) => {
+          loggerService.error({
+            message: 'Failed to generate recommendations in background',
+            watchroomId,
+            userId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+
+      return reply.status(202).send({
+        requestId,
+        message: 'Recommendation generation started. Results will be available shortly.',
+      });
+    },
+  });
+
+  fastify.get('/watchrooms/:watchroomId/recommendations/status/:requestId', {
+    schema: {
+      params: Type.Object({
+        watchroomId: Type.String({ format: 'uuid' }),
+        requestId: Type.String({ format: 'uuid' }),
+      }),
+      response: {
+        200: Type.Object({
+          status: Type.Union([Type.Literal('pending'), Type.Literal('completed')]),
+          count: Type.Integer(),
+        }),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { watchroomId, requestId } = request.params;
+
+      const status = await checkRecommendationStatusAction.execute({
+        requestId,
         watchroomId,
         userId,
       });
 
-      return reply.status(202).send({
-        message: 'Recommendation generation started. Results will be available shortly.',
-      });
+      return reply.send(status);
     },
   });
 
