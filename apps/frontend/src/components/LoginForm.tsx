@@ -38,8 +38,8 @@ export default function LoginForm() {
     try {
       await loginUser({ email: values.email, password: values.password });
 
-      // Redirect to the intended page or home
-      navigate(redirectTo || '/');
+      // Redirect to the intended page or dashboard
+      navigate(redirectTo || '/dashboard');
     } catch {
       form.setError('root', {
         message: 'Invalid email or password',
@@ -59,9 +59,15 @@ export default function LoginForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
+                <FormLabel
+                  htmlFor="email"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Email
+                </FormLabel>
                 <FormControl>
                   <Input
+                    id="email"
                     placeholder="name@domain.com"
                     {...field}
                   />
@@ -75,10 +81,16 @@ export default function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
+                <FormLabel
+                  htmlFor="password"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Password
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
+                      id="password"
                       placeholder="Enter your password"
                       type={showPassword ? 'text' : 'password'}
                       {...field}
@@ -90,6 +102,7 @@ export default function LoginForm() {
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                       tabIndex={-1}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                     </Button>

@@ -41,12 +41,14 @@
 ### Testy jednostkowe (Unit Tests)
 
 **Backend:**
+
 - Framework: **Vitest**
 - Zakres: Logika biznesowa, serwisy, helpery, walidacja
 - Mockowanie: Zewnętrzne zależności (database, external APIs, services)
 - Wykorzystanie: `createTestContext()`, `Generator` class, `vi.mock()`
 
 **Frontend:**
+
 - Framework: **Vitest + Testing Library**
 - Zakres: Komponenty React, hooks, utils, walidacja formularzy (Zod)
 - Mockowanie: API calls, React Router, context providers
@@ -55,6 +57,7 @@
 ### Testy integracyjne (Integration Tests)
 
 **Backend API:**
+
 - Framework: **Vitest + Supertest**
 - Zakres: Testowanie endpointów Fastify z rzeczywistą bazą danych (test environment)
 - Proces:
@@ -65,6 +68,7 @@
 - Mockowanie: Zewnętrzne API (TMDB, OpenRouter)
 
 **Frontend-Backend:**
+
 - Weryfikacja kontraktów API między frontendem a backendem
 - Testowanie przepływu danych end-to-end
 
@@ -74,6 +78,7 @@
 **Konfiguracja:** Chromium/Desktop Chrome (zgodnie ze standardami projektu)
 
 **Strategie:**
+
 - **Page Object Model (POM):** Organizacja kodu testowego dla maintainability
 - **Browser Context Isolation:** Każdy test w oddzielnej sesji przeglądarki
 - **Visual Regression:** `expect(page).toHaveScreenshot()` dla kluczowych widoków
@@ -81,6 +86,7 @@
 - **Parallel Execution:** Przyspieszenie wykonania testów
 
 **Scenariusze do pokrycia:**
+
 1. **Pełny flow użytkownika:**
    - Rejestracja → Logowanie → Dodanie ulubionych seriali → Utworzenie pokoju → Generowanie rekomendacji
 2. **Multi-user scenarios:**
@@ -100,6 +106,7 @@
 ### Testy wydajnościowe (Performance Tests)
 
 **Backend API:**
+
 - Narzędzie: **k6** lub **Artillery**
 - Typy testów:
   - Baseline test (10 VU, 1 min)
@@ -112,6 +119,7 @@
   - `/api/series/search` (integracja TMDB)
 
 **Frontend:**
+
 - Narzędzia: **Lighthouse CLI**, **Chrome DevTools**, **WebPageTest**
 - Metryki: TTFB, FCP, LCP, TTI, CLS
 - Warunki testowe:
@@ -135,46 +143,54 @@
 #### POST /api/users/register
 
 **Testy pozytywne:**
+
 - ✓ Rejestracja z poprawnymi danymi (unikalny email, silne hasło)
 - ✓ Weryfikacja hashowania hasła (bcrypt, minimum 12 rounds)
 - ✓ Zwrócenie danych użytkownika bez hasła w response
 
 **Testy negatywne:**
+
 - ✗ Rejestracja z istniejącym emailem → `ResourceAlreadyExistsError` (409)
 - ✗ Nieprawidłowy format email → `InputNotValidError` (400)
 - ✗ Hasło za słabe (< wymagane znaki) → `InputNotValidError` (400)
 - ✗ Brakujące wymagane pola → `InputNotValidError` (400)
 
 **Walidacja:**
+
 - TypeBox schema validation
 - Sanitizacja danych wejściowych
 
 #### POST /api/users/login
 
 **Testy pozytywne:**
+
 - ✓ Poprawne logowanie zwraca access token w body
 - ✓ Refresh token zapisany w HTTP-only cookie
 - ✓ Cookie ma flagi: Secure, SameSite=strict
 - ✓ Token zawiera poprawne claims (userId, email)
 
 **Testy negatywne:**
+
 - ✗ Błędny email → `UnauthorizedAccessError` (401)
 - ✗ Błędne hasło → `UnauthorizedAccessError` (401)
 - ✗ Nieistniejący użytkownik → `UnauthorizedAccessError` (401)
 - ✗ Brakujące pola → `InputNotValidError` (400)
 
 **Security:**
+
 - Rate limiting (max 5 prób/min z IP)
 - Generyczne komunikaty błędów (nie ujawniać czy email istnieje)
 
 #### POST /api/users/refresh
 
 **Testy pozytywne:**
+
 - ✓ Odświeżenie tokenu z ważnym refresh token
 - ✓ Nowy access token w response
 - ✓ Rotacja refresh tokenów (nowy refresh token w cookie)
 
 **Testy negatywne:**
+
 - ✗ Brak refresh token → `UnauthorizedAccessError` (401)
 - ✗ Nieprawidłowy refresh token → `UnauthorizedAccessError` (401)
 - ✗ Wygasły refresh token → `UnauthorizedAccessError` (401)
@@ -183,11 +199,13 @@
 #### GET /api/users/profile
 
 **Testy pozytywne:**
+
 - ✓ Zwraca profil zalogowanego użytkownika
 - ✓ Zawiera listę ulubionych seriali
 - ✓ Poprawny format danych (zgodnie z TypeBox schema)
 
 **Testy negatywne:**
+
 - ✗ Brak authorization header → `UnauthorizedAccessError` (401)
 - ✗ Nieprawidłowy access token → `UnauthorizedAccessError` (401)
 - ✗ Wygasły access token → `UnauthorizedAccessError` (401)
@@ -195,17 +213,20 @@
 #### PUT /api/users/profile/series
 
 **Testy pozytywne:**
+
 - ✓ Dodanie ulubionych seriali do profilu
 - ✓ Aktualizacja istniejącej listy seriali
 - ✓ Weryfikacja zapisu w bazie danych
 - ✓ Transakcja bazodanowa (ACID)
 
 **Testy negatywne:**
+
 - ✗ Brak autoryzacji → `UnauthorizedAccessError` (401)
 - ✗ Nieprawidłowa struktura danych → `InputNotValidError` (400)
 - ✗ Błąd bazy danych → rollback transakcji
 
 **Testy transakcji:**
+
 - Rollback przy częściowym błędzie
 - Weryfikacja stanu bazy przed i po operacji
 
@@ -214,12 +235,14 @@
 #### POST /api/watchrooms
 
 **Testy pozytywne:**
+
 - ✓ Utworzenie pokoju przez zalogowanego użytkownika
 - ✓ Generowanie unikalnego invite code (UUID v7)
 - ✓ Użytkownik ustawiony jako owner pokoju
 - ✓ Zwrócenie pełnych danych pokoju z invite link
 
 **Testy negatywne:**
+
 - ✗ Brak autoryzacji → `UnauthorizedAccessError` (401)
 - ✗ Nieprawidłowe dane pokoju → `InputNotValidError` (400)
 - ✗ Brakujące wymagane pola → `InputNotValidError` (400)
@@ -227,11 +250,13 @@
 #### GET /api/watchrooms/:id
 
 **Testy pozytywne:**
+
 - ✓ Zwraca szczegóły pokoju z listą uczestników
 - ✓ Zawiera ulubione seriale wszystkich uczestników
 - ✓ Owner pokoju jest oznaczony
 
 **Testy negatywne:**
+
 - ✗ Nieistniejący pokój → `ResourceNotFoundError` (404)
 - ✗ Użytkownik nie jest uczestnikiem → `ForbiddenAccessError` (403)
 - ✗ Brak autoryzacji → `UnauthorizedAccessError` (401)
@@ -239,29 +264,34 @@
 #### POST /api/watchrooms/:inviteCode/join
 
 **Testy pozytywne:**
+
 - ✓ Dołączenie do pokoju przez prawidłowy invite code
 - ✓ Użytkownik dodany do listy uczestników
 - ✓ Idempotentność (użytkownik już w pokoju → nie duplikuj)
 - ✓ Transakcja bazodanowa
 
 **Testy negatywne:**
+
 - ✗ Nieprawidłowy invite code → `ResourceNotFoundError` (404)
 - ✗ Wygasły invite code → `OperationNotValidError` (400)
 - ✗ Brak autoryzacji → `UnauthorizedAccessError` (401)
 
 **Testy transakcji:**
+
 - Rollback przy błędzie dodawania uczestnika
 - Concurrent joins (advisory locks)
 
 #### POST /api/watchrooms/:id/recommendations
 
 **Testy pozytywne:**
+
 - ✓ Generowanie rekomendacji (minimum 2 użytkowników)
 - ✓ Wysłanie zbiorczych danych do OpenRouter API
 - ✓ Parsowanie i zapis rekomendacji do bazy
 - ✓ Zwrócenie rekomendacji z uzasadnieniami
 
 **Testy negatywne:**
+
 - ✗ Za mało uczestników (< 2) → `OperationNotValidError` (400)
 - ✗ Brak autoryzacji → `UnauthorizedAccessError` (401)
 - ✗ Użytkownik nie jest uczestnikiem → `ForbiddenAccessError` (403)
@@ -269,6 +299,7 @@
 - ✗ Invalid response z OpenRouter → `ExternalServiceError` (502)
 
 **Testy integracji z External API:**
+
 - Mockowanie OpenRouter w testach automatycznych
 - Contract testing (struktura request/response)
 - Retry strategy z exponential backoff
@@ -276,26 +307,30 @@
 - Timeout handling (30s)
 
 **Performance:**
+
 - Rate limiting (max 10 req/min na pokój)
 - Caching wyników (10 min TTL)
 
 ### 4.3. Moduł Series - Testy API (Vitest + Supertest)
 
-#### GET /api/series/search?query=...
+#### GET /api/series/search?query=
 
 **Testy pozytywne:**
+
 - ✓ Wyszukiwanie seriali przez TMDB API
 - ✓ Zwrócenie listy wyników z podstawowymi danymi
 - ✓ Paginacja wyników
 - ✓ Caching popularnych zapytań
 
 **Testy negatywne:**
+
 - ✗ Pusty query → `InputNotValidError` (400)
 - ✗ Query za krótki (< 2 znaki) → `InputNotValidError` (400)
 - ✗ TMDB API timeout → `ExternalServiceError` (503)
 - ✗ TMDB rate limit (429) → retry with backoff
 
 **Testy integracji TMDB:**
+
 - Mockowanie w testach automatycznych
 - Contract testing
 - Error handling (timeout, rate limit, invalid response)
@@ -305,6 +340,7 @@
 #### Authentication & Authorization
 
 **JWT Security:**
+
 - ✓ Access token wygasa po określonym czasie (15 min)
 - ✓ Refresh token wygasa po określonym czasie (7 dni)
 - ✗ Manipulowany token (invalid signature) → odrzucony
@@ -312,20 +348,24 @@
 - ✓ Token revocation (logout)
 
 **CORS:**
+
 - ✓ Tylko trusted origins mają dostęp
 - ✗ Request z nieautoryzowanej domeny → odrzucony
 
 **Rate Limiting:**
+
 - ✓ Auth endpoints: 5 prób/min z IP
 - ✓ API endpoints: 100 req/min na użytkownika
 - ✗ Przekroczenie limitu → 429 Too Many Requests
 
 **Input Validation:**
+
 - SQL Injection: Próby injection w parametrach (Drizzle ORM chroni)
 - XSS: Próby wstrzyknięcia skryptów w input fields
 - Command Injection: Próby wykonania poleceń systemowych
 
 **Cookie Security:**
+
 - ✓ HTTP-only flag (nie dostępne przez JavaScript)
 - ✓ Secure flag (tylko HTTPS)
 - ✓ SameSite=strict (ochrona CSRF)
@@ -333,19 +373,21 @@
 ### 4.5. Testy transakcji bazodanowych
 
 **Scenariusze:**
+
 1. **Multi-step write operations:**
    - Utworzenie pokoju + dodanie owner jako uczestnika
    - Rollback przy częściowym błędzie
-   
+
 2. **Concurrency handling:**
    - Jednoczesne dołączanie do pokoju (advisory locks)
    - Jednoczesne generowanie rekomendacji
-   
+
 3. **Isolation levels:**
    - Serializable dla critical flows
    - Read committed dla read-heavy operations
 
 **Weryfikacja:**
+
 - Stan bazy przed transakcją
 - Stan bazy po udanej transakcji
 - Stan bazy po rollback (bez zmian)
@@ -356,6 +398,7 @@
 #### Scenariusz 1: Pełny flow użytkownika (Happy Path)
 
 **Kroki:**
+
 1. Przejście na stronę rejestracji
 2. Wypełnienie formularza rejestracji
 3. Automatyczne przekierowanie na dashboard
@@ -370,6 +413,7 @@
 12. Weryfikacja wyświetlenia rekomendacji z uzasadnieniem
 
 **Assercje:**
+
 - URL changes correctly
 - Success messages displayed
 - Data persisted across navigation
@@ -379,26 +423,31 @@
 #### Scenariusz 2: Rejestracja i logowanie
 
 **Test 1: Poprawna rejestracja**
+
 - Wypełnienie formularza z poprawnymi danymi
 - Weryfikacja success message
 - Przekierowanie na dashboard
 
 **Test 2: Walidacja formularza rejestracji**
+
 - Pusty email → error message
 - Nieprawidłowy format email → error message
 - Hasło za krótkie → error message
 - Niezgodne hasła → error message
 
 **Test 3: Email już istnieje**
+
 - Próba rejestracji z istniejącym emailem
 - Wyświetlenie odpowiedniego błędu
 
 **Test 4: Poprawne logowanie**
+
 - Wypełnienie formularza logowania
 - Przekierowanie na dashboard
 - Weryfikacja zalogowanego stanu (header)
 
 **Test 5: Błędne credentials**
+
 - Błędny email/hasło → error message
 - Brak przekierowania
 - Pozostanie na stronie logowania
@@ -406,54 +455,64 @@
 #### Scenariusz 3: Zarządzanie ulubionymi serialami
 
 **Test 1: Wyszukiwanie seriali**
+
 - Wpisanie zapytania w search box
 - Debounce (300ms)
 - Wyświetlenie wyników z TMDB
 - Loading state podczas wyszukiwania
 
 **Test 2: Dodawanie serialu do ulubionych**
+
 - Kliknięcie na serial z wyników
 - Serial pojawia się na liście ulubionych
 - Persistence po refresh strony
 
 **Test 3: Usuwanie serialu**
+
 - Kliknięcie "Usuń" na serialu
 - Serial znika z listy
 - Persistence po refresh strony
 
 **Test 4: Pusta lista**
+
 - Wyświetlenie komunikatu "Brak ulubionych seriali"
 - Prompt do dodania seriali
 
 #### Scenariusz 4: Tworzenie i zarządzanie pokojami
 
 **Test 1: Utworzenie pokoju**
+
 - Kliknięcie "Utwórz pokój"
 - Wypełnienie nazwy pokoju
 - Weryfikacja utworzenia
 - Weryfikacja invite link
 
 **Test 2: Kopiowanie invite link**
+
 - Kliknięcie "Kopiuj link"
 - Feedback message "Skopiowano"
 
 **Test 3: Pusta lista pokojów**
+
 - Wyświetlenie komunikatu
 - CTA do utworzenia pierwszego pokoju
 
 #### Scenariusz 5: Dołączanie do pokoju
 
 **Test 1: Dołączenie przez invite link**
+
 - Otwarcie invite link
 - Automatyczne dołączenie (jeśli zalogowany)
 - Wyświetlenie pokoju
 
 **Test 2: Dołączenie jako niezalogowany**
+
 - Otwarcie invite link
 - Przekierowanie na logowanie
 - Po logowaniu → automatyczne dołączenie
 
 **Test 3: Nieprawidłowy invite code**
+
 - Próba otwarcia nieistniejącego linku
 - Wyświetlenie błędu 404
 - Link do strony głównej
@@ -461,11 +520,13 @@
 #### Scenariusz 6: Generowanie rekomendacji
 
 **Test 1: Niewystarczająca liczba uczestników**
+
 - Tylko 1 uczestnik w pokoju
 - Przycisk "Generuj" disabled
 - Tooltip z informacją "Minimum 2 uczestników"
 
 **Test 2: Udane generowanie**
+
 - Minimum 2 uczestników
 - Kliknięcie "Generuj rekomendacje"
 - Loading state (spinner)
@@ -473,6 +534,7 @@
 - Każda rekomendacja ma tytuł, opis, uzasadnienie
 
 **Test 3: Error handling**
+
 - Symulacja błędu API (network offline)
 - Wyświetlenie error message
 - Możliwość retry
@@ -480,17 +542,20 @@
 #### Scenariusz 7: Obsługa błędów i edge cases
 
 **Test 1: Utrata połączenia**
+
 - Symulacja offline mode
 - Próba akcji wymagającej API
 - Wyświetlenie error message
 - Retry po przywróceniu połączenia
 
 **Test 2: Session expiration**
+
 - Wygaśnięcie access token
 - Próba akcji chronionej
 - Silent token refresh lub redirect na login
 
 **Test 3: Unauthorized access**
+
 - Próba dostępu do /profile bez logowania
 - Redirect na /login
 - Preservation of intended URL (redirect back after login)
@@ -498,6 +563,7 @@
 #### Scenariusz 8: Visual Regression Testing
 
 **Screenshot tests dla kluczowych widoków:**
+
 - Login page
 - Registration page
 - Dashboard (empty state)
@@ -508,6 +574,7 @@
 - Mobile responsive views
 
 **Assercje:**
+
 - `expect(page).toHaveScreenshot()`
 - Porównanie z baseline
 - Flagowanie zmian wizualnych
@@ -515,11 +582,13 @@
 #### Scenariusz 9: Responsive Design
 
 **Test na różnych viewport:**
+
 - Desktop (1920x1080)
 - Tablet (768x1024)
 - Mobile (375x667)
 
 **Weryfikacja:**
+
 - Menu navigation (mobile hamburger)
 - Form layouts adaptują się
 - Tabele/listy są scrollable
@@ -567,31 +636,29 @@ apps/frontend/e2e/
 1. **Install & Cache:**
    - npm ci (with dependency caching)
    - Playwright browsers installation
-   
+
 2. **Lint & Type Check:**
    - ESLint
    - TypeScript type checking
-   
+
 3. **Unit Tests (Backend):**
    - Run: `npm run test:unit --workspace=@apps/backend`
-   - Coverage threshold: 80%
-   
+
 4. **Integration Tests (Backend API):**
    - Spin up test PostgreSQL (Docker service)
    - Run migrations
    - Run: `npm run test:integration --workspace=@apps/backend`
    - Cleanup: `truncateTables()`
-   
+
 5. **Unit Tests (Frontend):**
    - Run: `npm run test:unit --workspace=@apps/frontend`
-   - Coverage threshold: 70%
-   
+
 6. **E2E Tests (Frontend):**
    - Build backend & frontend
    - Start services (Docker Compose)
    - Run: `npm run test:e2e --workspace=@apps/frontend`
    - Artifacts: Playwright traces, screenshots, videos
-   
+
 7. **Performance Tests (Optional - scheduled):**
    - k6 load tests
    - Lighthouse CI
@@ -605,7 +672,6 @@ apps/frontend/e2e/
 
 **Artifact storage:**
 
-- Test coverage reports (Codecov/Coveralls)
 - Playwright traces (on failure)
 - Performance reports (Lighthouse)
 - Test execution logs
@@ -670,12 +736,13 @@ mockService.mockRejectedValueOnce(
 ### 6.1. Backend Testing Stack
 
 **Vitest** - Test Runner
+
 - Framework do testów jednostkowych i integracyjnych
 - Konfiguracja: `vitest.config.js` w `apps/backend/`
 - Features: Fast execution, ESM support, TypeScript support
-- Coverage: c8 (integrated)
 
 **Supertest** - HTTP Testing Library
+
 - Testowanie endpointów Fastify bez uruchamiania serwera
 - Fluent API dla HTTP assertions
 - Integracja z Vitest
@@ -695,6 +762,7 @@ test('POST /api/users/login', async () => {
 ```
 
 **Test Utilities:**
+
 - `createTestContext()` - Setup test environment with mocked dependencies
 - `Generator` class - Create test data (users, rooms, series)
 - `truncateTables()` - Clean database between tests
@@ -703,6 +771,7 @@ test('POST /api/users/login', async () => {
 ### 6.2. Frontend Testing Stack
 
 **Vitest + Testing Library** - Unit/Component Testing
+
 - Testing React components
 - User-centric queries (getByRole, getByLabelText)
 - Environment: jsdom
@@ -722,6 +791,7 @@ test('shows validation error for invalid email', async () => {
 ```
 
 **Playwright** - E2E Testing
+
 - Browser automation (Chromium)
 - Page Object Model support
 - Visual regression testing
@@ -742,6 +812,7 @@ test('user can login successfully', async ({ page }) => {
 ```
 
 **MSW (Mock Service Worker)** - API Mocking
+
 - Intercept network requests in E2E tests
 - Consistent API mocking across tests
 - Support for REST and GraphQL
@@ -795,9 +866,9 @@ npx @lhci/cli autorun
 ```
 
 **Chrome DevTools** - Manual Performance Analysis
+
 - Network throttling (Fast 3G, Slow 4G)
 - Performance profiling
-- Coverage analysis
 
 ### 6.4. Security Testing Tools
 
@@ -808,6 +879,7 @@ npm audit --audit-level=moderate
 ```
 
 **OWASP ZAP** - Security Testing
+
 - Automated security scanning
 - API security testing
 - Penetration testing basics
@@ -815,12 +887,14 @@ npm audit --audit-level=moderate
 ### 6.5. CI/CD Tools
 
 **GitHub Actions** - Automation Pipeline
+
 - Workflow: `.github/workflows/test.yml`
 - Parallel test execution
 - Artifact storage
 - Status checks for PRs
 
 **Docker** - Test Environment
+
 - PostgreSQL service container
 - Application containers for E2E
 - Consistent environment across CI/local
@@ -850,7 +924,6 @@ npm audit --audit-level=moderate
 - ✅ GitHub Actions workflow (`.github/workflows/test.yml`)
 - ✅ PostgreSQL service container
 - ✅ Playwright browsers caching
-- ✅ Coverage reporting (Codecov)
 - ✅ Test artifacts storage
 
 ### Faza 2: Testy Jednostkowe (Ciągły proces - równolegle z developmentem)
@@ -858,7 +931,6 @@ npm audit --audit-level=moderate
 **Backend (Vitest):**
 
 - Unit tests dla wszystkich serwisów i helperów
-- Coverage target: **80% dla business logic**
 - Testy pisane przed/w trakcie implementacji (TDD approach)
 
 **Frontend (Vitest + Testing Library):**
@@ -866,7 +938,6 @@ npm audit --audit-level=moderate
 - Unit tests dla komponentów UI
 - Tests dla custom hooks
 - Tests dla utility functions
-- Coverage target: **70% dla komponentów**
 
 **Timeline:** Ongoing (każda nowa feature = nowe testy)
 
@@ -986,7 +1057,6 @@ npm audit --audit-level=moderate
 
 - Test execution time trends
 - Flaky test identification (<1% acceptance)
-- Coverage trends
 - Performance regression detection
 
 ### Summary Timeline
@@ -1022,7 +1092,6 @@ npm audit --audit-level=moderate
 
 - 100% critical path tests (E2E)
 - 100% API integration tests
-- ≥80% unit tests coverage (business logic)
 
 ### 8.2. Stabilność
 

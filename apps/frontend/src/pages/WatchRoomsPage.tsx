@@ -9,6 +9,7 @@ import { getMyWatchrooms } from '../api/queries/watchroom.ts';
 import type { Watchroom } from '../api/types/watchroom.ts';
 import { CreateWatchRoomModal } from '../components/CreateWatchRoomModal.tsx';
 import { AuthContext } from '../context/AuthContext.tsx';
+import { getMyFavoriteSeries } from '../api/queries/getMyFavoriteSeries.ts';
 
 export default function WatchRoomsPage() {
   const [rooms, setRooms] = useState<Watchroom[]>([]);
@@ -16,9 +17,12 @@ export default function WatchRoomsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
+  const [favoriteSeriesCount, setFavoriteSeriesCount] = useState<number>(0);
   const pageSize = 20;
   const navigate = useNavigate();
   const { userData } = useContext(AuthContext);
+
+  const MINIMUM_FAVORITE_SERIES = 5;
 
   const fetchRooms = async () => {
     try {
@@ -34,10 +38,29 @@ export default function WatchRoomsPage() {
     }
   };
 
+  const fetchFavoriteSeriesCount = async () => {
+    try {
+      const response = await getMyFavoriteSeries(1, 1);
+      setFavoriteSeriesCount(response.metadata.total);
+    } catch {
+      // Silent failure - user can still see rooms, just can't create new ones
+      setFavoriteSeriesCount(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchFavoriteSeriesCount();
+  }, []);
+
   useEffect(() => {
     fetchRooms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  const canCreateRoom = favoriteSeriesCount >= MINIMUM_FAVORITE_SERIES;
+  const disabledReason = !canCreateRoom
+    ? `You need to rate at least ${MINIMUM_FAVORITE_SERIES} shows before creating a watch room.`
+    : undefined;
 
   const handleCopyLink = (publicLinkId: string) => {
     const link = `${window.location.origin}/watchrooms/public/${publicLinkId}`;
@@ -61,7 +84,11 @@ export default function WatchRoomsPage() {
                 Create rooms and invite friends to get AI-powered series recommendations
               </p>
             </div>
-            <CreateWatchRoomModal onRoomCreated={fetchRooms} />
+            <CreateWatchRoomModal
+              onRoomCreated={fetchRooms}
+              disabled={!canCreateRoom}
+              disabledReason={disabledReason}
+            />
           </div>
 
           {/* Loading State */}
@@ -85,7 +112,11 @@ export default function WatchRoomsPage() {
                 <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
                   Create your first room to start getting AI-powered group recommendations!
                 </p>
-                <CreateWatchRoomModal onRoomCreated={fetchRooms} />
+                <CreateWatchRoomModal
+                  onRoomCreated={fetchRooms}
+                  disabled={!canCreateRoom}
+                  disabledReason={disabledReason}
+                />
               </CardContent>
             </Card>
           )}

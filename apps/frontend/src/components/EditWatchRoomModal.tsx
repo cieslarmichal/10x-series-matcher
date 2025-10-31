@@ -95,9 +95,10 @@ export function EditWatchRoomModal({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Room Name</FormLabel>
+                  <FormLabel htmlFor="edit-room-name">Room Name</FormLabel>
                   <FormControl>
                     <Input
+                      id="edit-room-name"
                       placeholder="Weekend Movie Night"
                       {...field}
                     />
@@ -111,9 +112,10 @@ export function EditWatchRoomModal({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
+                  <FormLabel htmlFor="edit-room-description">Description (optional)</FormLabel>
                   <FormControl>
                     <Textarea
+                      id="edit-room-description"
                       placeholder="Looking for a great series to watch together..."
                       {...field}
                     />

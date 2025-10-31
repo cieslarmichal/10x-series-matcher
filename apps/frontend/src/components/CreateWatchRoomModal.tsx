@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/Form';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
 import { createWatchroom } from '../api/queries/watchroom';
 
 const formSchema = z.object({
@@ -21,9 +22,11 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface CreateWatchRoomModalProps {
   onRoomCreated: () => void;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
-export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProps) {
+export function CreateWatchRoomModal({ onRoomCreated, disabled = false, disabledReason }: CreateWatchRoomModalProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<FormValues>({
@@ -51,17 +54,30 @@ export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProp
     }
   }
 
+  const buttonElement = (
+    <Button disabled={disabled}>
+      <Plus className="w-4 h-4 mr-2" />
+      Create Room
+    </Button>
+  );
+
   return (
     <Dialog
       open={open}
       onOpenChange={setOpen}
     >
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Room
-        </Button>
-      </DialogTrigger>
+      {disabled && disabledReason ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-block">{buttonElement}</div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>{disabledReason}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <DialogTrigger asChild>{buttonElement}</DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Watch Room</DialogTitle>
@@ -76,9 +92,10 @@ export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProp
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Room Name</FormLabel>
+                  <FormLabel htmlFor="create-room-name">Room Name</FormLabel>
                   <FormControl>
                     <Input
+                      id="create-room-name"
                       placeholder="Weekend Movie Night"
                       {...field}
                     />
@@ -92,9 +109,10 @@ export function CreateWatchRoomModal({ onRoomCreated }: CreateWatchRoomModalProp
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
+                  <FormLabel htmlFor="create-room-description">Description (optional)</FormLabel>
                   <FormControl>
                     <Textarea
+                      id="create-room-description"
                       placeholder="Looking for a great series to watch together..."
                       {...field}
                     />

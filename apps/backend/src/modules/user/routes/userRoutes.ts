@@ -23,26 +23,18 @@ import { FavoriteSeriesRepositoryImpl } from '../infrastructure/repositories/fav
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
 import { UserSessionRepositoryImpl } from '../infrastructure/repositories/userSessionRepositoryImpl.ts';
 
-const userSchema = Type.Object({
-  id: Type.String({ format: 'uuid' }),
-  name: Type.String({ minLength: 1, maxLength: 64 }),
-  email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
-  createdAt: Type.String({ format: 'date-time' }),
-});
-
-const favoriteSeriesSchema = Type.Object({
-  seriesTmdbId: Type.Number(),
-  addedAt: Type.String({ format: 'date-time' }),
-});
-
-const favoriteSeriesListSchema = Type.Object({
-  data: Type.Array(favoriteSeriesSchema),
-  metadata: Type.Object({
-    page: Type.Number(),
-    pageSize: Type.Number(),
-    total: Type.Number(),
-  }),
-});
+import {
+  addFavoriteSeriesRequestSchema,
+  changePasswordRequestSchema,
+  favoriteSeriesListSchema,
+  favoriteSeriesParamsSchema,
+  favoriteSeriesQuerySchema,
+  favoriteSeriesSchema,
+  loginRequestSchema,
+  loginResponseSchema,
+  registerRequestSchema,
+  userSchema,
+} from './userSchemas.ts';
 
 const appEnvironment = process.env['NODE_ENV'];
 
@@ -116,11 +108,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.post('/users/register', {
     schema: {
-      body: Type.Object({
-        name: Type.String({ minLength: 1, maxLength: 64 }),
-        email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
-        password: Type.String({ minLength: 8, maxLength: 64 }),
-      }),
+      body: registerRequestSchema,
       response: {
         201: userSchema,
       },
@@ -141,12 +129,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.post('/users/login', {
     schema: {
-      body: Type.Object({
-        email: Type.String({ format: 'email' }),
-        password: Type.String({ minLength: 8, maxLength: 64 }),
-      }),
+      body: loginRequestSchema,
       response: {
-        200: Type.Object({ accessToken: Type.String() }),
+        200: loginResponseSchema,
       },
     },
     config: {
@@ -286,10 +271,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.patch('/users/me/password', {
     schema: {
-      body: Type.Object({
-        oldPassword: Type.String(),
-        newPassword: Type.String(),
-      }),
+      body: changePasswordRequestSchema,
       response: {
         204: Type.Null(),
       },
@@ -313,10 +295,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.get('/users/me/favorite-series', {
     schema: {
-      querystring: Type.Object({
-        page: Type.Optional(Type.Number({ minimum: 1, maximum: 500 })),
-        pageSize: Type.Optional(Type.Number({ minimum: 1, maximum: 100 })),
-      }),
+      querystring: favoriteSeriesQuerySchema,
       response: {
         200: favoriteSeriesListSchema,
       },
@@ -350,9 +329,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.post('/users/me/favorite-series', {
     schema: {
-      body: Type.Object({
-        seriesTmdbId: Type.Number({ minimum: 1 }),
-      }),
+      body: addFavoriteSeriesRequestSchema,
       response: {
         201: favoriteSeriesSchema,
       },
@@ -379,9 +356,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.delete('/users/me/favorite-series/:seriesTmdbId', {
     schema: {
-      params: Type.Object({
-        seriesTmdbId: Type.Number({ minimum: 1 }),
-      }),
+      params: favoriteSeriesParamsSchema,
       response: {
         204: Type.Null(),
       },

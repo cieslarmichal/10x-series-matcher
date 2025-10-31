@@ -49,6 +49,12 @@ export default function SearchSeries({ onAddToProfile, profileSeriesIds }: Searc
   return (
     <div className="space-y-6">
       <div className="relative">
+        <label
+          htmlFor="series-search"
+          className="sr-only"
+        >
+          Search for a TV series
+        </label>
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           id="series-search"

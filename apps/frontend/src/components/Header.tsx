@@ -8,7 +8,7 @@ import { Button } from './ui/Button';
 import { Skeleton } from './ui/Skeleton';
 
 const sections = [
-  { name: 'Home', href: '/' },
+  { name: 'Home', href: '/', authHref: '/dashboard' },
   { name: 'Series', href: '/series', requiresAuth: true },
   { name: 'Watch Rooms', href: '/watchrooms', requiresAuth: true },
 ];
@@ -27,7 +27,7 @@ export default function Header() {
         {/* Logo */}
         <div className="flex-shrink-0 flex items-center">
           <Link
-            to="/"
+            to={userData ? '/dashboard' : '/'}
             className="flex items-center gap-2"
           >
             <div className="h-8 w-8 bg-foreground rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
@@ -43,15 +43,16 @@ export default function Header() {
             {sections
               .filter((section) => !section.requiresAuth || userData)
               .map((item) => {
-                let isActive = location.pathname === '/' && location.pathname === item.href;
+                const href = userData && item.authHref ? item.authHref : item.href;
+                let isActive = location.pathname === '/' && location.pathname === href;
 
-                if (item.href !== '/') {
-                  isActive = location.pathname.startsWith(item.href);
+                if (href !== '/') {
+                  isActive = location.pathname.startsWith(href);
                 }
                 return (
                   <button
                     key={item.href}
-                    onClick={() => navigate(item.href)}
+                    onClick={() => navigate(href)}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       'relative px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap',
@@ -233,12 +234,13 @@ export default function Header() {
             {sections
               .filter((section) => !section.requiresAuth || userData)
               .map((item) => {
-                const isActive = location.pathname === item.href;
+                const href = userData && item.authHref ? item.authHref : item.href;
+                const isActive = location.pathname === href;
                 return (
                   <button
                     key={item.href}
                     onClick={() => {
-                      navigate(item.href);
+                      navigate(href);
                       setMobileMenuOpen(false);
                     }}
                     className={cn(

@@ -17,7 +17,6 @@ export default function LoginPage() {
     } else {
       setActiveTab('login');
     }
-    // Reset registration success when changing tabs
     setIsRegistrationSuccess(false);
   }, [tab]);
 

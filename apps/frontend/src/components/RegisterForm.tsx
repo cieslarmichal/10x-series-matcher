@@ -10,6 +10,7 @@ import { registerUser } from '../api/queries/register';
 import { useState } from 'react';
 import { z } from 'zod';
 import { EyeIcon, EyeOffIcon, InfoIcon } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const formSchema = z
   .object({
@@ -39,6 +40,9 @@ interface Props {
 export default function RegisterForm({ onSuccess }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,7 +62,12 @@ export default function RegisterForm({ onSuccess }: Props) {
         password: values.password,
       });
 
-      onSuccess?.();
+      // Call onSuccess callback if provided, otherwise redirect to dashboard
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate(redirectTo || '/dashboard');
+      }
     } catch (error) {
       form.setError('root', {
         message: error instanceof Error ? error.message : 'Registration error',
@@ -78,9 +87,15 @@ export default function RegisterForm({ onSuccess }: Props) {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-foreground">Name</FormLabel>
+                <FormLabel
+                  htmlFor="name"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Name
+                </FormLabel>
                 <FormControl>
                   <Input
+                    id="name"
                     placeholder="John Doe"
                     {...field}
                   />
@@ -95,9 +110,15 @@ export default function RegisterForm({ onSuccess }: Props) {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
+                <FormLabel
+                  htmlFor="email"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Email
+                </FormLabel>
                 <FormControl>
                   <Input
+                    id="email"
                     placeholder="name@domain.com"
                     {...field}
                   />
@@ -113,7 +134,12 @@ export default function RegisterForm({ onSuccess }: Props) {
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center gap-2">
-                  <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
+                  <FormLabel
+                    htmlFor="password"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    Password
+                  </FormLabel>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <InfoIcon className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
@@ -132,6 +158,7 @@ export default function RegisterForm({ onSuccess }: Props) {
                 <FormControl>
                   <div className="relative">
                     <Input
+                      id="password"
                       placeholder="Minimum 8 characters"
                       type={showPassword ? 'text' : 'password'}
                       {...field}
@@ -143,6 +170,7 @@ export default function RegisterForm({ onSuccess }: Props) {
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                       tabIndex={-1}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                     </Button>
@@ -158,10 +186,16 @@ export default function RegisterForm({ onSuccess }: Props) {
             name="passwordConfirmation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-foreground">Confirm Password</FormLabel>
+                <FormLabel
+                  htmlFor="passwordConfirmation"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Repeat Password
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
+                      id="passwordConfirmation"
                       placeholder="Repeat password"
                       type={showPasswordConfirmation ? 'text' : 'password'}
                       {...field}
@@ -173,6 +207,9 @@ export default function RegisterForm({ onSuccess }: Props) {
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
                       onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
                       tabIndex={-1}
+                      aria-label={
+                        showPasswordConfirmation ? 'Hide password confirmation' : 'Show password confirmation'
+                      }
                     >
                       {showPasswordConfirmation ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                     </Button>

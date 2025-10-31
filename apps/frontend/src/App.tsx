@@ -5,6 +5,7 @@ import { AuthContextProvider } from './context/AuthContextProvider.tsx';
 import Root from './pages/Root';
 import { CookiesProvider } from 'react-cookie';
 import HomePage from './pages/HomePage.tsx';
+import DashboardPage from './pages/DashboardPage.tsx';
 import { TooltipProvider } from './components/ui/Tooltip.tsx';
 import PrivateRoute from './auth/privateRoute.tsx';
 import LogoutPage from './pages/LogoutPage.tsx';
@@ -23,6 +24,14 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />,
+      },
+      {
+        path: '/dashboard',
+        element: (
+          <PrivateRoute>
+            <DashboardPage />
+          </PrivateRoute>
+        ),
       },
       {
         path: '/login',

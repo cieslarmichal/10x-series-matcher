@@ -9,23 +9,83 @@ on:
       - main
 
 jobs:
-  ci:
+  build-and-lint:
+    name: Build and Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 24.9.0
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - run: npm run build:dev
       - run: npm run lint
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: build-and-lint
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24.9.0
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build:dev
       - run: docker compose up -d
-      - run: npm run test
+      - name: Run backend unit and integration tests
+        run: npm run test:ci --workspace=@apps/backend
+
+  frontend-unit-tests:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+    needs: build-and-lint
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24.9.0
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build:dev
+      - name: Run frontend unit tests
+        run: npm run test:unit --workspace=@apps/frontend
+
+  frontend-e2e-tests:
+    name: Frontend E2E Tests
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-unit-tests]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24.9.0
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build:dev
+      - run: docker compose up -d
+      - name: Wait for database to be ready
+        run: sleep 10
+      - name: Install Playwright browsers with system dependencies
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/frontend
+      - name: Run frontend E2E tests
+        run: npm run test:e2e --workspace=@apps/frontend
+        env:
+          CI: true
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report/
+          retention-days: 7
 
   deploy-backend:
     name: Fly deployment (BE)
-    needs: ci
+    needs: [backend-tests, frontend-unit-tests, frontend-e2e-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -37,7 +97,7 @@ jobs:
 
   deploy-frontend:
     name: Fly deployment (FE)
-    needs: ci
+    needs: [backend-tests, frontend-unit-tests, frontend-e2e-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:

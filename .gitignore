@@ -16,3 +16,13 @@ dist
 .tsbuildinfo
 
 .turbo
+
+# Test artifacts
+coverage
+.nyc_output
+playwright-report
+test-results
+*.lcov
+
+# Playwright
+apps/frontend/playwright/.cache
