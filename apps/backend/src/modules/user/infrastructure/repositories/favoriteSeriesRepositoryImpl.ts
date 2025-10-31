@@ -1,4 +1,4 @@
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, count } from 'drizzle-orm';
 
 import { UuidService } from '../../../../common/uuid/uuidService.ts';
 import type { Database } from '../../../../infrastructure/database/database.ts';
@@ -35,7 +35,7 @@ export class FavoriteSeriesRepositoryImpl implements FavoriteSeriesRepository {
 
   public async count(userId: string): Promise<number> {
     const [countResult] = await this.database.db
-      .select({ count: this.database.db.$count(userFavoriteSeries) })
+      .select({ count: count() })
       .from(userFavoriteSeries)
       .where(eq(userFavoriteSeries.userId, userId));
 
