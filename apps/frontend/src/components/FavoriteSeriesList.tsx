@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { getSeriesDetails } from '../api/queries/getSeriesDetails';
 import { FavoriteSeries, SeriesDetails } from '../api/types/series';
@@ -19,6 +19,7 @@ export default function FavoriteSeriesList({
 }: FavoriteSeriesListProps) {
   const [seriesDetails, setSeriesDetails] = useState<Map<number, SeriesDetails>>(new Map());
   const [removingIds, setRemovingIds] = useState<Set<number>>(new Set());
+  const timeoutIds = useRef<Map<number, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
     const loadSeriesDetails = async () => {
@@ -52,6 +53,15 @@ export default function FavoriteSeriesList({
     loadSeriesDetails();
   }, [favorites]);
 
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    const currentTimeouts = timeoutIds.current;
+    return () => {
+      currentTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      currentTimeouts.clear();
+    };
+  }, []);
+
   const handleRemoveFavorite = async (seriesTmdbId: number) => {
     // Add to removing set for animation
     setRemovingIds((prev) => new Set(prev).add(seriesTmdbId));
@@ -60,7 +70,7 @@ export default function FavoriteSeriesList({
       await onRemoveFavorite(seriesTmdbId);
 
       // Delay the actual removal to allow fade-out animation
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         setSeriesDetails((prev) => {
           const newMap = new Map(prev);
           newMap.delete(seriesTmdbId);
@@ -71,7 +81,10 @@ export default function FavoriteSeriesList({
           newSet.delete(seriesTmdbId);
           return newSet;
         });
+        timeoutIds.current.delete(seriesTmdbId);
       }, 300);
+      
+      timeoutIds.current.set(seriesTmdbId, timeoutId);
     } catch (err) {
       // Remove from removing set if failed
       setRemovingIds((prev) => {

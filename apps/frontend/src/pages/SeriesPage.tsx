@@ -47,7 +47,7 @@ export default function SeriesPage() {
     }
   };
 
-  const handleRemoveSeries = async (seriesTmdbId: number) => {
+  const handleRemoveSeries = async (seriesTmdbId: number): Promise<void> => {
     try {
       await removeFavoriteSeries(seriesTmdbId);
       setProfileSeriesIds((prev) => {

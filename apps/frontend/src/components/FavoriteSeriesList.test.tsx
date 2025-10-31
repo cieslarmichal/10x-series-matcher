@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FavoriteSeriesList from './FavoriteSeriesList';
@@ -17,6 +17,11 @@ describe('FavoriteSeriesList', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Clean up any pending timers
+    vi.clearAllTimers();
   });
 
   it('should render loading skeletons when isLoading is true', () => {
@@ -173,7 +178,6 @@ describe('FavoriteSeriesList', () => {
   });
 
   it('should call onRemoveFavorite when remove button is clicked', async () => {
-    const user = userEvent.setup();
     const mockFavorites: FavoriteSeries[] = [{ seriesTmdbId: 1, addedAt: '2025-01-01' }];
 
     mockGetSeriesDetails.mockResolvedValue({
@@ -195,7 +199,7 @@ describe('FavoriteSeriesList', () => {
 
     mockOnRemoveFavorite.mockResolvedValue(undefined);
 
-    render(
+    const { unmount } = render(
       <FavoriteSeriesList
         favorites={mockFavorites}
         onRemoveFavorite={mockOnRemoveFavorite}
@@ -208,9 +212,12 @@ describe('FavoriteSeriesList', () => {
     });
 
     const removeButton = screen.getByLabelText('Remove Breaking Bad from favorites');
-    await user.click(removeButton);
+    await userEvent.click(removeButton);
 
     expect(mockOnRemoveFavorite).toHaveBeenCalledWith(1);
+
+    // Unmount component to trigger cleanup
+    unmount();
   });
 
   it('should handle error when loading series details fails', async () => {
@@ -266,7 +273,6 @@ describe('FavoriteSeriesList', () => {
   });
 
   it('should handle error when removing favorite fails', async () => {
-    const user = userEvent.setup();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const mockFavorites: FavoriteSeries[] = [{ seriesTmdbId: 1, addedAt: '2025-01-01' }];
@@ -290,7 +296,7 @@ describe('FavoriteSeriesList', () => {
 
     mockOnRemoveFavorite.mockRejectedValue(new Error('Failed to remove'));
 
-    render(
+    const { unmount } = render(
       <FavoriteSeriesList
         favorites={mockFavorites}
         onRemoveFavorite={mockOnRemoveFavorite}
@@ -303,7 +309,7 @@ describe('FavoriteSeriesList', () => {
     });
 
     const removeButton = screen.getByLabelText('Remove Breaking Bad from favorites');
-    await user.click(removeButton);
+    await userEvent.click(removeButton);
 
     expect(mockOnRemoveFavorite).toHaveBeenCalledWith(1);
 
@@ -314,6 +320,9 @@ describe('FavoriteSeriesList', () => {
 
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
+
+    // Unmount component to trigger cleanup
+    unmount();
   });
 
   it('should display fallback ID when series details are not loaded yet', () => {
