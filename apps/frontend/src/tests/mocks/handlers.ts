@@ -45,19 +45,13 @@ export const handlers = [
   http.post(`${API_BASE_URL}/users/refresh`, () => {
     // Simulate no refresh token available (user not logged in)
     // This prevents act() warnings in tests by not triggering state updates
-    return HttpResponse.json(
-      { message: 'No refresh token available' },
-      { status: 401 }
-    );
+    return HttpResponse.json({ message: 'No refresh token available' }, { status: 401 });
   }),
 
   http.post(`${API_BASE_URL}/users/refresh-token`, () => {
     // Simulate no refresh token available (user not logged in)
     // This prevents act() warnings in tests by not triggering state updates
-    return HttpResponse.json(
-      { message: 'No refresh token available' },
-      { status: 401 }
-    );
+    return HttpResponse.json({ message: 'No refresh token available' }, { status: 401 });
   }),
 
   http.post(`${API_BASE_URL}/users/logout`, () => {

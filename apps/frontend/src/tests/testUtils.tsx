@@ -37,7 +37,7 @@ export async function renderWithProviders(ui: ReactElement, options?: CustomRend
   }
 
   let result;
-  
+
   // Wrap render in act to handle initial state updates from AuthContextProvider
   await act(async () => {
     result = render(ui, { wrapper: Wrapper, ...renderOptions });
