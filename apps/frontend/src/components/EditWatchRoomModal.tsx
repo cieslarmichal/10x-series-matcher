@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { updateWatchroom } from '../api/queries/watchroom';
+import { DialogDescription } from '@radix-ui/react-dialog';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required').max(64, 'Name must be at most 64 characters'),
@@ -85,6 +86,7 @@ export function EditWatchRoomModal({
         <DialogHeader>
           <DialogTitle>Edit Watch Room</DialogTitle>
         </DialogHeader>
+        <DialogDescription>Update details of your watch room.</DialogDescription>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}

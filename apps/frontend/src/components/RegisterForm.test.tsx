@@ -10,8 +10,8 @@ describe('RegisterForm', () => {
     mockOnSuccess.mockClear();
   });
 
-  it('should render all form fields', () => {
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+  it('should render all form fields', async () => {
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
@@ -19,14 +19,14 @@ describe('RegisterForm', () => {
     expect(screen.getByPlaceholderText(/repeat password/i)).toBeInTheDocument();
   });
 
-  it('should render sign up button', () => {
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+  it('should render sign up button', async () => {
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument();
   });
 
-  it('should disable submit button when form is invalid', () => {
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+  it('should disable submit button when form is invalid', async () => {
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const submitButton = screen.getByRole('button', { name: /sign up/i });
     expect(submitButton).toBeDisabled();
@@ -34,7 +34,7 @@ describe('RegisterForm', () => {
 
   it('should show validation error for invalid email', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const emailInput = screen.getByLabelText(/email/i);
     const nameInput = screen.getByLabelText(/name/i);
@@ -50,7 +50,7 @@ describe('RegisterForm', () => {
 
   it('should show validation error for short password', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const passwordInput = screen.getByPlaceholderText(/minimum 8 characters/i);
 
@@ -64,7 +64,7 @@ describe('RegisterForm', () => {
 
   it('should show validation error for password without lowercase', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const passwordInput = screen.getByPlaceholderText(/minimum 8 characters/i);
 
@@ -78,7 +78,7 @@ describe('RegisterForm', () => {
 
   it('should show validation error for password without uppercase', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const passwordInput = screen.getByPlaceholderText(/minimum 8 characters/i);
 
@@ -92,7 +92,7 @@ describe('RegisterForm', () => {
 
   it('should show validation error for password without digit', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const passwordInput = screen.getByPlaceholderText(/minimum 8 characters/i);
 
@@ -106,7 +106,7 @@ describe('RegisterForm', () => {
 
   it('should show validation error for password without special character', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const passwordInput = screen.getByPlaceholderText(/minimum 8 characters/i);
 
@@ -120,7 +120,7 @@ describe('RegisterForm', () => {
 
   it('should show validation error when passwords do not match', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const passwordInput = screen.getByPlaceholderText(/minimum 8 characters/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/repeat password/i);
@@ -140,7 +140,7 @@ describe('RegisterForm', () => {
 
   it('should enable submit button when form is valid', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const nameInput = screen.getByLabelText(/name/i);
     const emailInput = screen.getByLabelText(/email/i);
@@ -160,7 +160,7 @@ describe('RegisterForm', () => {
 
   it('should toggle password visibility', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const passwordInput = screen.getByPlaceholderText(/minimum 8 characters/i);
     const toggleButtons = screen.getAllByRole('button').filter((btn) => btn.getAttribute('tabindex') === '-1');
@@ -177,7 +177,7 @@ describe('RegisterForm', () => {
 
   it('should toggle confirm password visibility', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const confirmPasswordInput = screen.getByPlaceholderText(/repeat password/i);
     const toggleButtons = screen.getAllByRole('button').filter((btn) => btn.getAttribute('tabindex') === '-1');
@@ -194,7 +194,7 @@ describe('RegisterForm', () => {
 
   it('should call onSuccess callback after successful registration', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const nameInput = screen.getByLabelText(/name/i);
     const emailInput = screen.getByLabelText(/email/i);
@@ -220,7 +220,7 @@ describe('RegisterForm', () => {
 
   it('should show submitting state when form is being submitted', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     const nameInput = screen.getByLabelText(/name/i);
     const emailInput = screen.getByLabelText(/email/i);
@@ -252,8 +252,8 @@ describe('RegisterForm', () => {
     });
   });
 
-  it('should have password requirements tooltip icon', () => {
-    renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
+  it('should have password requirements tooltip icon', async () => {
+    await renderWithProviders(<RegisterForm onSuccess={mockOnSuccess} />);
 
     // Look for the info icon - it should be present near the password label
     const passwordLabel = screen.getByText(/^password$/i);

@@ -48,6 +48,7 @@ export default function RegisterForm({ onSuccess }: Props) {
     resolver: zodResolver(formSchema),
     mode: 'onTouched',
     defaultValues: {
+      name: '',
       email: '',
       password: '',
       passwordConfirmation: '',

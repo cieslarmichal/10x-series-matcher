@@ -11,8 +11,8 @@ describe('SearchSeries', () => {
     mockOnAddToProfile.mockClear();
   });
 
-  it('should render search input', () => {
-    renderWithProviders(
+  it('should render search input', async () => {
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -24,7 +24,7 @@ describe('SearchSeries', () => {
 
   it('should show search results', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -45,7 +45,7 @@ describe('SearchSeries', () => {
 
   it('should display search results after typing', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -66,7 +66,7 @@ describe('SearchSeries', () => {
 
   it('should filter results based on search query', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -87,7 +87,7 @@ describe('SearchSeries', () => {
 
   it('should show "Add to Profile" button for each result', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -108,7 +108,7 @@ describe('SearchSeries', () => {
 
   it('should call onAddToProfile when clicking add button', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -139,7 +139,7 @@ describe('SearchSeries', () => {
 
   it('should clear search input after adding to profile', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -168,7 +168,7 @@ describe('SearchSeries', () => {
     const profileWithSeries = new Set<number>([1396]);
     const user = userEvent.setup();
 
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={profileWithSeries}
@@ -190,7 +190,7 @@ describe('SearchSeries', () => {
     const profileWithSeries = new Set<number>([1396]);
     const user = userEvent.setup();
 
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={profileWithSeries}
@@ -211,7 +211,7 @@ describe('SearchSeries', () => {
 
   it('should show "no results" message for empty results', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -231,7 +231,7 @@ describe('SearchSeries', () => {
 
   it('should display series rating', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -251,7 +251,7 @@ describe('SearchSeries', () => {
 
   it('should display series year', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}
@@ -271,7 +271,7 @@ describe('SearchSeries', () => {
 
   it('should clear results when search input is cleared', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    await renderWithProviders(
       <SearchSeries
         onAddToProfile={mockOnAddToProfile}
         profileSeriesIds={mockProfileSeriesIds}

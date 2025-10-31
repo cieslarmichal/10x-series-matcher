@@ -1,7 +1,8 @@
 import { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { render, RenderOptions, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthContextProvider } from '@/context/AuthContextProvider';
+import { act } from 'react';
 
 /**
  * Test Utilities for Frontend Unit Tests
@@ -16,8 +17,9 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 
 /**
  * Custom render function that wraps components with necessary providers
+ * Waits for initial async state updates to complete to prevent act() warnings
  */
-export function renderWithProviders(ui: ReactElement, options?: CustomRenderOptions) {
+export async function renderWithProviders(ui: ReactElement, options?: CustomRenderOptions) {
   const { withRouter = true, withAuth = true, ...renderOptions } = options || {};
 
   function Wrapper({ children }: { children: React.ReactNode }) {
@@ -34,7 +36,16 @@ export function renderWithProviders(ui: ReactElement, options?: CustomRenderOpti
     return <>{wrapped}</>;
   }
 
-  return render(ui, { wrapper: Wrapper, ...renderOptions });
+  let result;
+  
+  // Wrap render in act to handle initial state updates from AuthContextProvider
+  await act(async () => {
+    result = render(ui, { wrapper: Wrapper, ...renderOptions });
+    // Wait for the auth initialization to complete
+    await waitFor(() => Promise.resolve(), { timeout: 100 });
+  });
+
+  return result!;
 }
 
 /**
