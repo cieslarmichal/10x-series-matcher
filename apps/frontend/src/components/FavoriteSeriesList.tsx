@@ -83,7 +83,7 @@ export default function FavoriteSeriesList({
         });
         timeoutIds.current.delete(seriesTmdbId);
       }, 300);
-      
+
       timeoutIds.current.set(seriesTmdbId, timeoutId);
     } catch (err) {
       // Remove from removing set if failed
