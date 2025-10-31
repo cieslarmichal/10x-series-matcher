@@ -113,6 +113,8 @@ jobs:
           docker exec 10x-series-matcher-postgres psql -U postgres -d postgres -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
       - name: Run database migrations
         run: cd apps/backend && npm run db:migrate
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
