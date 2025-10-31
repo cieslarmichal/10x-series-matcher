@@ -54,22 +54,22 @@ describe('Header', () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it('should show login and sign up buttons when not authenticated', () => {
+  it('should show sign in and sign up buttons when not authenticated', () => {
     renderHeader(null, true);
 
-    const loginButtons = screen.getAllByRole('button', { name: /login/i });
-    expect(loginButtons.length).toBeGreaterThan(0);
+    const signInButtons = screen.getAllByRole('button', { name: /sign in/i });
+    expect(signInButtons.length).toBeGreaterThan(0);
 
     const signUpButtons = screen.getAllByRole('button', { name: /sign up/i });
     expect(signUpButtons.length).toBeGreaterThan(0);
   });
 
-  it('should navigate to login page when login button is clicked', async () => {
+  it('should navigate to sign in page when sign in button is clicked', async () => {
     const user = userEvent.setup();
     renderHeader(null, true);
 
-    const loginButtons = screen.getAllByRole('button', { name: /login/i });
-    await user.click(loginButtons[0]);
+    const signInButtons = screen.getAllByRole('button', { name: /sign in/i });
+    await user.click(signInButtons[0]);
 
     expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
