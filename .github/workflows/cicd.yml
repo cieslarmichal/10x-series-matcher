@@ -8,48 +8,80 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-lint:
     name: Build and Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24.9.0
           cache: "npm"
       - run: npm ci
       - run: npm run build:dev
       - run: npm run lint
+      - name: Cache build artifacts
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            apps/*/dist
+            apps/*/src/**/*.js
+            node_modules
+          key: build-${{ github.sha }}
 
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
     needs: build-and-lint
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24.9.0
           cache: "npm"
-      - run: npm ci
-      - run: npm run build:dev
+      - name: Restore build artifacts
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            apps/*/dist
+            apps/*/src/**/*.js
+            node_modules
+          key: build-${{ github.sha }}
+          fail-on-cache-miss: true
       - run: docker compose up -d
+      - name: Wait for database to be ready
+        run: |
+          timeout 30 bash -c 'until docker exec 10x-series-matcher-postgres pg_isready -U postgres; do sleep 1; done'
       - name: Run backend unit and integration tests
         run: npm run test:ci --workspace=@apps/backend
+      - name: Stop docker compose
+        if: always()
+        run: docker compose down -v
 
   frontend-unit-tests:
     name: Frontend Unit Tests
     runs-on: ubuntu-latest
     needs: build-and-lint
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24.9.0
           cache: "npm"
-      - run: npm ci
-      - run: npm run build:dev
+      - name: Restore build artifacts
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            apps/*/dist
+            apps/*/src/**/*.js
+            node_modules
+          key: build-${{ github.sha }}
+          fail-on-cache-miss: true
       - name: Run frontend unit tests
         run: npm run test:unit --workspace=@apps/frontend
 
@@ -58,21 +90,41 @@ jobs:
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-unit-tests]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24.9.0
           cache: "npm"
-      - run: npm ci
-      - run: npm run build:dev
+      - name: Restore build artifacts
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            apps/*/dist
+            apps/*/src/**/*.js
+            node_modules
+          key: build-${{ github.sha }}
+          fail-on-cache-miss: true
       - run: docker compose up -d
       - name: Wait for database to be ready
-        run: sleep 10
+        run: |
+          timeout 30 bash -c 'until docker exec 10x-series-matcher-postgres pg_isready -U postgres; do sleep 1; done'
+      - name: Clean database for E2E tests
+        run: |
+          docker exec 10x-series-matcher-postgres psql -U postgres -d postgres -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
+      - name: Run database migrations
+        run: cd apps/backend && npm run db:migrate
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('apps/frontend/package-lock.json') }}
       - name: Install Playwright browsers with system dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
         working-directory: apps/frontend
       - name: Run frontend E2E tests
-        run: npm run test:e2e --workspace=@apps/frontend
+        run: npm run test:e2e --workspace=@apps/frontend -- --project=chromium
         env:
           CI: true
       - name: Upload Playwright report
@@ -82,6 +134,9 @@ jobs:
           name: playwright-report
           path: apps/frontend/playwright-report/
           retention-days: 7
+      - name: Stop docker compose
+        if: always()
+        run: docker compose down -v
 
   deploy-backend:
     name: Fly deployment (BE)
@@ -89,7 +144,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy -c apps/backend/fly.toml --remote-only --depot=false
         env:
@@ -101,7 +156,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy -c apps/frontend/fly.toml --remote-only --depot=false
         env:

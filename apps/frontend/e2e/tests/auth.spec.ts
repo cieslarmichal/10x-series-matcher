@@ -89,14 +89,18 @@ test.describe('Authentication Flow', () => {
       await expect(registerPage.backToSignInButton).toBeVisible({ timeout: 10000 });
       await registerPage.backToSignInButton.click();
 
-      // Wait for navigation to login tab
-      await expect(page).toHaveURL(/\/login(\?tab=login)?$/);
+      // Wait for navigation to login tab with longer timeout for CI
+      await page.waitForURL(/\/login(\?tab=login)?$/, { timeout: 15000 });
+
+      // Wait for page to be stable
+      await page.waitForLoadState('networkidle');
 
       // Now try to login
       await loginPage.login(uniqueEmail, password);
 
       // Should redirect to dashboard after successful login
-      await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+      await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+      await expect(page).toHaveURL(/\/dashboard/);
     });
 
     test('should show error for invalid credentials', async ({ page }) => {

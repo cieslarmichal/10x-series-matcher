@@ -50,19 +50,20 @@ export default function Header() {
                   isActive = location.pathname.startsWith(href);
                 }
                 return (
-                  <button
+                  <Button
                     key={item.href}
+                    variant="ghost"
                     onClick={() => navigate(href)}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       'relative px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap',
-                      'text-muted-foreground hover:text-primary cursor-pointer',
+                      'text-muted-foreground hover:text-primary hover:bg-transparent',
                       isActive && 'text-primary',
                     )}
                   >
                     {item.name}
                     {isActive && <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />}
-                  </button>
+                  </Button>
                 );
               })}
           </div>
@@ -212,7 +213,7 @@ export default function Header() {
               onClick={() => navigate('/login')}
               className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground h-8 px-3"
             >
-              Login
+              Sign in
             </Button>
           )}
 
@@ -237,43 +238,46 @@ export default function Header() {
                 const href = userData && item.authHref ? item.authHref : item.href;
                 const isActive = location.pathname === href;
                 return (
-                  <button
+                  <Button
                     key={item.href}
+                    variant="ghost"
                     onClick={() => {
                       navigate(href);
                       setMobileMenuOpen(false);
                     }}
                     className={cn(
-                      'block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                      'w-full justify-start px-3 py-2 text-sm font-medium rounded-md transition-colors',
                       'text-muted-foreground hover:text-primary hover:bg-primary/10',
                       isActive && 'text-primary bg-primary/10',
                     )}
                   >
                     {item.name}
-                  </button>
+                  </Button>
                 );
               })}
 
             {userDataInitialized && !userData && (
               <div className="pt-2 border-t border-border">
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     navigate('/login');
                     setMobileMenuOpen(false);
                   }}
-                  className="block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  className="w-full justify-start px-3 py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground hover:text-primary hover:bg-primary/10"
                 >
-                  Login
-                </button>
-                <button
+                  Sign in
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     navigate('/login?tab=register');
                     setMobileMenuOpen(false);
                   }}
-                  className="block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  className="w-full justify-start px-3 py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground hover:text-primary hover:bg-primary/10"
                 >
                   Sign Up
-                </button>
+                </Button>
               </div>
             )}
           </div>
