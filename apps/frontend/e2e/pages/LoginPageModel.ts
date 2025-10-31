@@ -18,11 +18,11 @@ export class LoginPageModel extends BasePageModel {
   }
 
   get loginButton() {
-    return this.page.getByRole('button', { name: 'Sign In' }).and(this.page.locator('[type="submit"]'));
+    return this.page.getByTestId('login-submit-button');
   }
 
   get registerTab() {
-    return this.page.locator('.bg-secondary').getByRole('button', { name: 'Sign Up' });
+    return this.page.getByTestId('register-tab-button');
   }
 
   get fieldErrorMessage() {

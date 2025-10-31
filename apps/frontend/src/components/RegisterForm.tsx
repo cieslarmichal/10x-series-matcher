@@ -224,6 +224,7 @@ export default function RegisterForm({ onSuccess }: Props) {
             type="submit"
             className="w-full h-11 mt-6"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
+            data-testid="register-submit-button"
           >
             {form.formState.isSubmitting ? 'Signing up...' : 'Sign Up'}
           </Button>

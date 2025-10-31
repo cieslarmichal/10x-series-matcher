@@ -338,6 +338,7 @@ export default function WatchRoomDetailsPage() {
                     variant="default"
                     onClick={handleCopyLink}
                     className="sm:self-start shadow-md hover:shadow-lg transition-all"
+                    data-testid="copy-invite-link-button"
                   >
                     <Copy className="w-4 h-4 mr-2" />
                     Copy Link
@@ -437,6 +438,7 @@ export default function WatchRoomDetailsPage() {
                     variant="outline"
                     className="w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 rounded-lg shadow-sm"
                     onClick={() => setConfirmLeaveDialog(true)}
+                    data-testid="leave-room-button"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Leave Room
@@ -467,6 +469,7 @@ export default function WatchRoomDetailsPage() {
                     onClick={handleGenerateRecommendations}
                     // disabled={isGenerating || room.participants.length < 2}
                     className="sm:self-start shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                    data-testid="generate-recommendations-button"
                   >
                     {isGenerating ? (
                       <>
@@ -520,12 +523,13 @@ export default function WatchRoomDetailsPage() {
                       room.participants.length < 2 ? (
                         <>
                           Invite at least one more person to generate recommendations.{' '}
-                          <button
+                          <Button
+                            variant="link"
                             onClick={handleCopyLink}
-                            className="text-primary hover:text-primary/80 underline underline-offset-2 font-semibold transition-colors cursor-pointer"
+                            className="text-primary hover:text-primary/80 underline underline-offset-2 font-semibold p-0 h-auto"
                           >
                             Copy invite link
-                          </button>
+                          </Button>
                         </>
                       ) : (
                         'Click the "Generate" button above to get AI-powered series recommendations for your group!'

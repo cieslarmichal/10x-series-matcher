@@ -22,7 +22,7 @@ export class WatchRoomPageModel extends BasePageModel {
   }
 
   get copyInviteLinkButton() {
-    return this.page.getByRole('button', { name: /copy.*link|share/i });
+    return this.page.getByTestId('copy-invite-link-button');
   }
 
   get participantsList() {
@@ -30,7 +30,7 @@ export class WatchRoomPageModel extends BasePageModel {
   }
 
   get generateRecommendationsButton() {
-    return this.page.getByRole('button', { name: /generate.*recommendation/i });
+    return this.page.getByTestId('generate-recommendations-button');
   }
 
   get recommendationsList() {
@@ -46,7 +46,7 @@ export class WatchRoomPageModel extends BasePageModel {
   }
 
   get leaveRoomButton() {
-    return this.page.getByRole('button', { name: /leave.*room/i });
+    return this.page.getByTestId('leave-room-button');
   }
 
   async gotoRoom(roomId: string): Promise<void> {

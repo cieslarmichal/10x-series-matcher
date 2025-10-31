@@ -104,6 +104,7 @@ export default function DashboardPage() {
                     className="w-full"
                     size="lg"
                     onClick={() => navigate('/series')}
+                    data-testid="rate-more-shows-button"
                   >
                     Rate More Shows
                   </Button>
@@ -156,6 +157,7 @@ export default function DashboardPage() {
                             onClick={() => navigate('/watchrooms')}
                             disabled={true}
                             size="lg"
+                            data-testid="create-room-button"
                           >
                             Create a Room
                           </Button>
@@ -171,6 +173,7 @@ export default function DashboardPage() {
                       onClick={() => navigate('/watchrooms')}
                       disabled={false}
                       size="lg"
+                      data-testid="create-room-button"
                     >
                       Create a Room
                     </Button>

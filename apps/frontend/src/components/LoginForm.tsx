@@ -117,6 +117,7 @@ export default function LoginForm() {
             type="submit"
             className="w-full h-11 mt-6"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
+            data-testid="login-submit-button"
           >
             {form.formState.isSubmitting ? 'Signing in...' : 'Sign In'}
           </Button>

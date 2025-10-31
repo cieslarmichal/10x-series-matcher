@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
+import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,12 +76,13 @@ export default function LoginPage() {
                   Your account has been created successfully. You can now sign in with your credentials.
                 </p>
               </div>
-              <button
+              <Button
                 onClick={handleBackToLogin}
-                className="w-full h-11 bg-foreground hover:bg-foreground/90 text-background font-medium rounded-md transition-all duration-200 cursor-pointer"
+                className="w-full h-11"
+                data-testid="back-to-sign-in-button"
               >
                 Back to Sign In
-              </button>
+              </Button>
             </div>
           ),
         };
@@ -111,26 +113,30 @@ export default function LoginPage() {
         {!isRegistrationSuccess && (
           <div className="flex justify-center">
             <div className="bg-secondary p-1 rounded-lg border border-border">
-              <button
-                className={`px-6 py-2.5 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer ${
+              <Button
+                variant="ghost"
+                className={`px-6 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
                   activeTab === 'login'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 onClick={() => handleTabChange('login')}
+                data-testid="login-tab-button"
               >
                 Sign In
-              </button>
-              <button
-                className={`px-6 py-2.5 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer ${
+              </Button>
+              <Button
+                variant="ghost"
+                className={`px-6 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
                   activeTab === 'register'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 onClick={() => handleTabChange('register')}
+                data-testid="register-tab-button"
               >
                 Sign Up
-              </button>
+              </Button>
             </div>
           </div>
         )}

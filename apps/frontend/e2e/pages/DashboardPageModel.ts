@@ -14,7 +14,7 @@ export class DashboardPageModel extends BasePageModel {
   }
 
   get addSeriesButton() {
-    return this.page.getByRole('button', { name: /add.*series|search.*series/i });
+    return this.page.getByTestId('rate-more-shows-button');
   }
 
   get seriesList() {
@@ -22,7 +22,7 @@ export class DashboardPageModel extends BasePageModel {
   }
 
   get createRoomButton() {
-    return this.page.getByRole('button', { name: /create.*room|new.*room/i });
+    return this.page.getByTestId('create-room-button');
   }
 
   get watchRoomsList() {

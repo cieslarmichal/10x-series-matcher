@@ -26,15 +26,15 @@ export class RegisterPageModel extends BasePageModel {
   }
 
   get registerButton() {
-    return this.page.getByRole('button', { name: 'Sign Up' }).and(this.page.locator('[type="submit"]'));
+    return this.page.getByTestId('register-submit-button');
   }
 
   get backToSignInButton() {
-    return this.page.getByRole('button', { name: /back to sign in/i });
+    return this.page.getByTestId('back-to-sign-in-button');
   }
 
   get loginTab() {
-    return this.page.getByRole('button', { name: 'Sign In' });
+    return this.page.getByTestId('login-tab-button');
   }
 
   get fieldErrorMessage() {
