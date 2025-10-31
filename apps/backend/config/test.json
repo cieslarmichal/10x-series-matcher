@@ -15,5 +15,8 @@
   },
   "tmdb": {
     "apiKey": "test-tmdb-api-key"
+  },
+  "openRouter": {
+    "apiKey": "test-open-router-api-key"
   }
 }
