@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
@@ -9,20 +9,11 @@ export default function LoginPage() {
   const tab = searchParams.get('tab');
   const redirect = searchParams.get('redirect');
 
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>(tab === 'register' ? 'register' : 'login');
+  // Derive activeTab directly from URL parameter
+  const activeTab = tab === 'register' ? 'register' : 'login';
   const [isRegistrationSuccess, setIsRegistrationSuccess] = useState(false);
 
-  useEffect(() => {
-    if (tab === 'register') {
-      setActiveTab('register');
-    } else {
-      setActiveTab('login');
-    }
-    setIsRegistrationSuccess(false);
-  }, [tab]);
-
   const handleTabChange = (newTab: 'login' | 'register') => {
-    setActiveTab(newTab);
     const params: Record<string, string> = { tab: newTab };
     if (redirect) params.redirect = redirect;
     setSearchParams(params);
@@ -35,7 +26,6 @@ export default function LoginPage() {
 
   const handleBackToLogin = () => {
     setIsRegistrationSuccess(false);
-    setActiveTab('login');
     const params: Record<string, string> = { tab: 'login' };
     if (redirect) params.redirect = redirect;
     setSearchParams(params);
@@ -101,7 +91,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex justify-center pt-32">
       {/* Subtle grid background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-size-[4rem_4rem]" />
 
       <div className="w-full max-w-md space-y-8 relative z-10 px-4">
         {/* Header */}
