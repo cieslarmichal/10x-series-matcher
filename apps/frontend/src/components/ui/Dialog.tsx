@@ -40,10 +40,7 @@ function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.C
   );
 }
 
-const DialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => {
+const DialogOverlay = ({ className, ref, ...props }: React.ComponentProps<typeof DialogPrimitive.Overlay>) => {
   return (
     <DialogPrimitive.Overlay
       ref={ref}
@@ -55,16 +52,19 @@ const DialogOverlay = React.forwardRef<
       {...props}
     />
   );
-});
+};
 
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
-const DialogContent = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
-    omitCloseButton?: boolean;
-  }
->(({ className, children, omitCloseButton = false, ...props }, ref) => {
+const DialogContent = ({
+  className,
+  children,
+  omitCloseButton = false,
+  ref,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  omitCloseButton?: boolean;
+}) => {
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -96,7 +96,7 @@ const DialogContent = React.forwardRef<
       </DialogPrimitive.Content>
     </DialogPortal>
   );
-});
+};
 
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
