@@ -1,9 +1,16 @@
 import type { TmdbService } from '../../domain/services/tmdbService.ts';
-import type { SeriesSearchResult } from '../../domain/types/series.ts';
+import type { TmdbSeries } from '../../domain/types/tmdbSeries.ts';
 
-export interface SearchSeriesInput {
+export interface SearchSeriesActionPayload {
   readonly query: string;
   readonly page: number;
+}
+
+export interface SeriesSearchActionResult {
+  readonly page: number;
+  readonly results: TmdbSeries[];
+  readonly totalPages: number;
+  readonly totalResults: number;
 }
 
 export class SearchSeriesAction {
@@ -13,7 +20,7 @@ export class SearchSeriesAction {
     this.tmdbService = tmdbService;
   }
 
-  public async execute(input: SearchSeriesInput): Promise<SeriesSearchResult> {
+  public async execute(input: SearchSeriesActionPayload): Promise<SeriesSearchActionResult> {
     const result = await this.tmdbService.searchSeries({
       query: input.query,
       page: input.page,

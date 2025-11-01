@@ -1,5 +1,5 @@
 import type { TmdbService } from '../../domain/services/tmdbService.ts';
-import type { SeriesDetails } from '../../domain/types/series.ts';
+import type { TmdbSeriesDetails } from '../../domain/types/tmdbSeries.ts';
 
 export class GetSeriesDetailsAction {
   private readonly tmdbService: TmdbService;
@@ -8,7 +8,7 @@ export class GetSeriesDetailsAction {
     this.tmdbService = tmdbService;
   }
 
-  public async execute(seriesTmdbId: number): Promise<SeriesDetails> {
+  public async execute(seriesTmdbId: number): Promise<TmdbSeriesDetails> {
     const details = await this.tmdbService.getSeriesDetails(seriesTmdbId);
 
     return details;

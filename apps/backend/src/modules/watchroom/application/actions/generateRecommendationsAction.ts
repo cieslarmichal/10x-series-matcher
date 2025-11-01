@@ -3,9 +3,9 @@ import { ResourceNotFoundError } from '../../../../common/errors/resourceNotFoun
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import type { OpenRouterService } from '../../../../common/openRouter/openRouterService.ts';
 import type { ResponseFormat } from '../../../../common/openRouter/types.ts';
+import type { FavoriteSeriesRepository } from '../../../series/domain/repositories/favoriteSeriesRepository.ts';
+import type { IgnoredSeriesRepository } from '../../../series/domain/repositories/ignoredSeriesRepository.ts';
 import type { TmdbService } from '../../../series/domain/services/tmdbService.ts';
-import type { FavoriteSeriesRepository } from '../../../user/domain/repositories/favoriteSeriesRepository.ts';
-import type { IgnoredSeriesRepository } from '../../../user/domain/repositories/ignoredSeriesRepository.ts';
 import type { RecommendationRepository } from '../../domain/repositories/recommendationRepository.ts';
 import type { WatchroomRepository } from '../../domain/repositories/watchroomRepository.ts';
 
@@ -205,11 +205,7 @@ export class GenerateRecommendationsAction {
     });
 
     // Resolve series names to TMDB IDs by searching TMDB
-    const resolvedRecommendations = await this.resolveSeriesNames(
-      aiRecommendations,
-      allSeriesIds,
-      allIgnoredSeriesIds,
-    );
+    const resolvedRecommendations = await this.resolveSeriesNames(aiRecommendations, allSeriesIds, allIgnoredSeriesIds);
 
     this.loggerService.info({
       message: 'Series names resolved to TMDB IDs',

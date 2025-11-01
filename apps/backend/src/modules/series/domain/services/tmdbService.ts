@@ -1,12 +1,19 @@
-import type { SeriesDetails, SeriesSearchResult, SeriesExternalIds } from '../types/series.ts';
+import type { TmdbSeries, TmdbSeriesDetails, TmdbSeriesExternalIds } from '../types/tmdbSeries.ts';
 
 export interface SearchSeriesParams {
   readonly query: string;
   readonly page: number;
 }
 
+export interface SeriesSearchResult {
+  readonly page: number;
+  readonly results: TmdbSeries[];
+  readonly totalPages: number;
+  readonly totalResults: number;
+}
+
 export interface TmdbService {
   searchSeries(params: SearchSeriesParams): Promise<SeriesSearchResult>;
-  getSeriesDetails(seriesTmdbId: number): Promise<SeriesDetails>;
-  getSeriesExternalIds(seriesTmdbId: number): Promise<SeriesExternalIds>;
+  getSeriesDetails(seriesTmdbId: number): Promise<TmdbSeriesDetails>;
+  getSeriesExternalIds(seriesTmdbId: number): Promise<TmdbSeriesExternalIds>;
 }

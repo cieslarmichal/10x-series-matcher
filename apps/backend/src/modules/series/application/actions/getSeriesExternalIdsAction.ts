@@ -1,5 +1,5 @@
 import type { TmdbService } from '../../domain/services/tmdbService.ts';
-import type { SeriesExternalIds } from '../../domain/types/series.ts';
+import type { TmdbSeriesExternalIds } from '../../domain/types/tmdbSeries.ts';
 
 export class GetSeriesExternalIdsAction {
   private readonly tmdbService: TmdbService;
@@ -8,7 +8,7 @@ export class GetSeriesExternalIdsAction {
     this.tmdbService = tmdbService;
   }
 
-  public async execute(seriesTmdbId: number): Promise<SeriesExternalIds> {
+  public async execute(seriesTmdbId: number): Promise<TmdbSeriesExternalIds> {
     return this.tmdbService.getSeriesExternalIds(seriesTmdbId);
   }
 }

@@ -1,4 +1,4 @@
-export interface Series {
+export interface TmdbSeries {
   readonly id: number;
   readonly name: string;
   readonly posterPath: string | null;
@@ -10,7 +10,7 @@ export interface Series {
   readonly originalLanguage: string;
 }
 
-export interface SeriesDetails {
+export interface TmdbSeriesDetails {
   readonly id: number;
   readonly name: string;
   readonly posterPath: string | null;
@@ -24,14 +24,7 @@ export interface SeriesDetails {
   readonly voteAverage: number;
 }
 
-export interface SeriesSearchResult {
-  readonly page: number;
-  readonly results: Series[];
-  readonly totalPages: number;
-  readonly totalResults: number;
-}
-
-export interface SeriesExternalIds {
+export interface TmdbSeriesExternalIds {
   readonly imdbId: string | null;
   readonly tvdbId: number | null;
   readonly facebookId: string | null;

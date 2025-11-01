@@ -1,12 +1,15 @@
 import { ResourceAlreadyExistsError } from '../../../../common/errors/resourceAlreadyExistsError.ts';
+import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import type { IgnoredSeriesRepository } from '../../domain/repositories/ignoredSeriesRepository.ts';
 import type { IgnoredSeries } from '../../domain/types/ignoredSeries.ts';
 
 export class AddIgnoredSeriesAction {
   private readonly ignoredSeriesRepository: IgnoredSeriesRepository;
+  private readonly loggerService: LoggerService;
 
-  public constructor(ignoredSeriesRepository: IgnoredSeriesRepository) {
+  public constructor(ignoredSeriesRepository: IgnoredSeriesRepository, loggerService: LoggerService) {
     this.ignoredSeriesRepository = ignoredSeriesRepository;
+    this.loggerService = loggerService;
   }
 
   public async execute(userId: string, seriesTmdbId: number): Promise<IgnoredSeries> {
@@ -21,6 +24,14 @@ export class AddIgnoredSeriesAction {
       });
     }
 
-    return this.ignoredSeriesRepository.create({ userId, seriesTmdbId });
+    const ignoredSeries = await this.ignoredSeriesRepository.create({ userId, seriesTmdbId });
+
+    this.loggerService.info({
+      message: 'Series added to ignored list',
+      userId,
+      seriesTmdbId,
+    });
+
+    return ignoredSeries;
   }
 }

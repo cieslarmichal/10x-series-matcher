@@ -1,63 +1,55 @@
-import { Type, type Static, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
+import { Type, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { createAuthenticationMiddleware } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
+import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
+import type { Database } from '../../../infrastructure/database/database.ts';
+import { AddFavoriteSeriesAction } from '../application/actions/addFavoriteSeriesAction.ts';
+import { AddIgnoredSeriesAction } from '../application/actions/addIgnoredSeriesAction.ts';
+import { GetFavoriteSeriesAction } from '../application/actions/getFavoriteSeriesAction.ts';
+import { GetIgnoredSeriesAction } from '../application/actions/getIgnoredSeriesAction.ts';
 import { GetSeriesDetailsAction } from '../application/actions/getSeriesDetailsAction.ts';
 import { GetSeriesExternalIdsAction } from '../application/actions/getSeriesExternalIdsAction.ts';
+import { RemoveFavoriteSeriesAction } from '../application/actions/removeFavoriteSeriesAction.ts';
+import { RemoveIgnoredSeriesAction } from '../application/actions/removeIgnoredSeriesAction.ts';
 import { SearchSeriesAction } from '../application/actions/searchSeriesAction.ts';
-import type { Series, SeriesDetails, SeriesExternalIds } from '../domain/types/series.ts';
+import type { TmdbSeries, TmdbSeriesDetails, TmdbSeriesExternalIds } from '../domain/types/tmdbSeries.ts';
+import { FavoriteSeriesRepositoryImpl } from '../infrastructure/repositories/favoriteSeriesRepositoryImpl.ts';
+import { IgnoredSeriesRepositoryImpl } from '../infrastructure/repositories/ignoredSeriesRepositoryImpl.ts';
 import { TmdbServiceImpl } from '../infrastructure/services/tmdbServiceImpl.ts';
 
-const seriesSchema = Type.Object({
-  id: Type.Number(),
-  name: Type.String(),
-  posterPath: Type.Union([Type.String(), Type.Null()]),
-  overview: Type.String(),
-  firstAirDate: Type.Union([Type.String(), Type.Null()]),
-  voteAverage: Type.Number(),
-});
-
-const seriesDetailsSchema = Type.Object({
-  id: Type.Number(),
-  name: Type.String(),
-  posterPath: Type.Union([Type.String(), Type.Null()]),
-  backdropPath: Type.Union([Type.String(), Type.Null()]),
-  overview: Type.String(),
-  firstAirDate: Type.Union([Type.String(), Type.Null()]),
-  genres: Type.Array(Type.String()),
-  numberOfSeasons: Type.Number(),
-  numberOfEpisodes: Type.Number(),
-  status: Type.String(),
-  voteAverage: Type.Number(),
-});
-
-const seriesExternalIdsSchema = Type.Object({
-  imdbId: Type.Union([Type.String(), Type.Null()]),
-  tvdbId: Type.Union([Type.Number(), Type.Null()]),
-  facebookId: Type.Union([Type.String(), Type.Null()]),
-  instagramId: Type.Union([Type.String(), Type.Null()]),
-  twitterId: Type.Union([Type.String(), Type.Null()]),
-});
-
-const seriesSearchResultSchema = Type.Object({
-  data: Type.Array(seriesSchema),
-  metadata: Type.Object({
-    page: Type.Number(),
-    pageSize: Type.Number(),
-    total: Type.Number(),
-  }),
-});
+import {
+  addFavoriteSeriesRequestSchema,
+  addIgnoredSeriesRequestSchema,
+  favoriteSeriesListSchema,
+  favoriteSeriesParamsSchema,
+  favoriteSeriesQuerySchema,
+  favoriteSeriesSchema,
+  ignoredSeriesListSchema,
+  ignoredSeriesParamsSchema,
+  ignoredSeriesQuerySchema,
+  ignoredSeriesSchema,
+  type SeriesDto,
+  type SeriesDetailsDto,
+  seriesDetailsSchema,
+  seriesExternalIdsSchema,
+  seriesParamsSchema,
+  seriesSearchQuerySchema,
+  seriesSearchResultSchema,
+  type SeriesExternalIdsDto,
+} from './seriesSchemas.ts';
 
 export const seriesRoutes: FastifyPluginAsyncTypebox<{
   config: Config;
   loggerService: LoggerService;
   tokenService: TokenService;
+  database: Database;
 }> = async function (fastify, opts) {
-  const { config, tokenService } = opts;
+  const { config, loggerService, tokenService, database } = opts;
 
-  const mapSeriesToResponse = (series: Series): Static<typeof seriesSchema> => ({
+  const mapSeriesToResponse = (series: TmdbSeries): SeriesDto => ({
     id: series.id,
     name: series.name,
     posterPath: series.posterPath,
@@ -66,7 +58,7 @@ export const seriesRoutes: FastifyPluginAsyncTypebox<{
     voteAverage: series.voteAverage,
   });
 
-  const mapSeriesDetailsToResponse = (details: SeriesDetails): Static<typeof seriesDetailsSchema> => ({
+  const mapSeriesDetailsToResponse = (details: TmdbSeriesDetails): SeriesDetailsDto => ({
     id: details.id,
     name: details.name,
     posterPath: details.posterPath,
@@ -80,7 +72,7 @@ export const seriesRoutes: FastifyPluginAsyncTypebox<{
     voteAverage: details.voteAverage,
   });
 
-  const mapSeriesExternalIdsToResponse = (externalIds: SeriesExternalIds): Static<typeof seriesExternalIdsSchema> => ({
+  const mapSeriesExternalIdsToResponse = (externalIds: TmdbSeriesExternalIds): SeriesExternalIdsDto => ({
     imdbId: externalIds.imdbId,
     tvdbId: externalIds.tvdbId,
     facebookId: externalIds.facebookId,
@@ -92,15 +84,20 @@ export const seriesRoutes: FastifyPluginAsyncTypebox<{
   const searchSeriesAction = new SearchSeriesAction(tmdbService);
   const getSeriesDetailsAction = new GetSeriesDetailsAction(tmdbService);
   const getSeriesExternalIdsAction = new GetSeriesExternalIdsAction(tmdbService);
+  const favoriteSeriesRepository = new FavoriteSeriesRepositoryImpl(database);
+  const getUserFavoriteSeriesAction = new GetFavoriteSeriesAction(favoriteSeriesRepository);
+  const addFavoriteSeriesAction = new AddFavoriteSeriesAction(favoriteSeriesRepository, loggerService);
+  const removeFavoriteSeriesAction = new RemoveFavoriteSeriesAction(favoriteSeriesRepository, loggerService);
+  const ignoredSeriesRepository = new IgnoredSeriesRepositoryImpl(database);
+  const getUserIgnoredSeriesAction = new GetIgnoredSeriesAction(ignoredSeriesRepository);
+  const addIgnoredSeriesAction = new AddIgnoredSeriesAction(ignoredSeriesRepository, loggerService);
+  const removeIgnoredSeriesAction = new RemoveIgnoredSeriesAction(ignoredSeriesRepository, loggerService);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
 
   fastify.get('/series/search', {
     schema: {
-      querystring: Type.Object({
-        query: Type.String({ minLength: 1 }),
-        page: Type.Optional(Type.Number({ minimum: 1, maximum: 500 })),
-      }),
+      querystring: seriesSearchQuerySchema,
       response: {
         200: seriesSearchResultSchema,
       },
@@ -124,9 +121,7 @@ export const seriesRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.get('/series/:seriesTmdbId', {
     schema: {
-      params: Type.Object({
-        seriesTmdbId: Type.Number({ minimum: 1 }),
-      }),
+      params: seriesParamsSchema,
       response: {
         200: seriesDetailsSchema,
       },
@@ -143,9 +138,7 @@ export const seriesRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.get('/series/:seriesTmdbId/external-ids', {
     schema: {
-      params: Type.Object({
-        seriesTmdbId: Type.Number({ minimum: 1 }),
-      }),
+      params: seriesParamsSchema,
       response: {
         200: seriesExternalIdsSchema,
       },
@@ -157,6 +150,176 @@ export const seriesRoutes: FastifyPluginAsyncTypebox<{
       const externalIds = await getSeriesExternalIdsAction.execute(seriesTmdbId);
 
       return reply.send(mapSeriesExternalIdsToResponse(externalIds));
+    },
+  });
+
+  fastify.get('/series/favorites', {
+    schema: {
+      querystring: favoriteSeriesQuerySchema,
+      response: {
+        200: favoriteSeriesListSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { page = 1, pageSize = 20 } = request.query;
+
+      const { data, total } = await getUserFavoriteSeriesAction.execute({ userId, page, pageSize });
+
+      return reply.send({
+        data: data.map((favorite) => ({
+          seriesTmdbId: favorite.seriesTmdbId,
+          addedAt: favorite.addedAt.toISOString(),
+        })),
+        metadata: {
+          page,
+          pageSize,
+          total,
+        },
+      });
+    },
+  });
+
+  fastify.post('/series/favorites', {
+    schema: {
+      body: addFavoriteSeriesRequestSchema,
+      response: {
+        201: favoriteSeriesSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { seriesTmdbId } = request.body;
+
+      const favorite = await addFavoriteSeriesAction.execute(userId, seriesTmdbId);
+
+      return reply.status(201).send({
+        seriesTmdbId: favorite.seriesTmdbId,
+        addedAt: favorite.addedAt.toISOString(),
+      });
+    },
+  });
+
+  fastify.delete('/series/favorites/:seriesTmdbId', {
+    schema: {
+      params: favoriteSeriesParamsSchema,
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { seriesTmdbId } = request.params;
+
+      await removeFavoriteSeriesAction.execute(userId, seriesTmdbId);
+
+      return reply.status(204).send();
+    },
+  });
+
+  fastify.get('/series/ignored', {
+    schema: {
+      querystring: ignoredSeriesQuerySchema,
+      response: {
+        200: ignoredSeriesListSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { page = 1, pageSize = 20 } = request.query;
+
+      const { data, total } = await getUserIgnoredSeriesAction.execute({ userId, page, pageSize });
+
+      return reply.send({
+        data: data.map((ignored) => ({
+          seriesTmdbId: ignored.seriesTmdbId,
+          ignoredAt: ignored.ignoredAt.toISOString(),
+        })),
+        metadata: {
+          page,
+          pageSize,
+          total,
+        },
+      });
+    },
+  });
+
+  fastify.post('/series/ignored', {
+    schema: {
+      body: addIgnoredSeriesRequestSchema,
+      response: {
+        201: ignoredSeriesSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { seriesTmdbId } = request.body;
+
+      const ignored = await addIgnoredSeriesAction.execute(userId, seriesTmdbId);
+
+      return reply.status(201).send({
+        seriesTmdbId: ignored.seriesTmdbId,
+        ignoredAt: ignored.ignoredAt.toISOString(),
+      });
+    },
+  });
+
+  fastify.delete('/series/ignored/:seriesTmdbId', {
+    schema: {
+      params: ignoredSeriesParamsSchema,
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { seriesTmdbId } = request.params;
+
+      await removeIgnoredSeriesAction.execute(userId, seriesTmdbId);
+
+      return reply.status(204).send();
     },
   });
 };

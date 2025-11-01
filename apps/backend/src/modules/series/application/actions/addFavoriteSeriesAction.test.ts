@@ -2,11 +2,12 @@ import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 
 import { Generator } from '../../../../../tests/generator.ts';
 import { ResourceAlreadyExistsError } from '../../../../common/errors/resourceAlreadyExistsError.ts';
+import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import { createConfig } from '../../../../core/config.ts';
 import { Database } from '../../../../infrastructure/database/database.ts';
 import { users, userFavoriteSeries } from '../../../../infrastructure/database/schema.ts';
+import { UserRepositoryImpl } from '../../../user/infrastructure/repositories/userRepositoryImpl.ts';
 import { FavoriteSeriesRepositoryImpl } from '../../infrastructure/repositories/favoriteSeriesRepositoryImpl.ts';
-import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 
 import { AddFavoriteSeriesAction } from './addFavoriteSeriesAction.ts';
 
@@ -15,14 +16,21 @@ describe('AddFavoriteSeriesAction', () => {
   let userRepository: UserRepositoryImpl;
   let favoriteSeriesRepository: FavoriteSeriesRepositoryImpl;
   let addFavoriteSeriesAction: AddFavoriteSeriesAction;
+  let loggerService: LoggerService;
 
   beforeEach(async () => {
     const config = createConfig();
     database = new Database({ url: config.database.url });
     userRepository = new UserRepositoryImpl(database);
     favoriteSeriesRepository = new FavoriteSeriesRepositoryImpl(database);
+    loggerService = {
+      debug: () => {},
+      info: () => {},
+      warn: () => {},
+      error: () => {},
+    } as unknown as LoggerService;
 
-    addFavoriteSeriesAction = new AddFavoriteSeriesAction(favoriteSeriesRepository);
+    addFavoriteSeriesAction = new AddFavoriteSeriesAction(favoriteSeriesRepository, loggerService);
 
     await database.db.delete(userFavoriteSeries);
     await database.db.delete(users);

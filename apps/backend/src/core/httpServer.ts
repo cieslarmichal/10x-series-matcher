@@ -250,6 +250,7 @@ export class HttpServer {
       config: this.config,
       loggerService: this.loggerService,
       tokenService,
+      database: this.database,
     });
 
     await this.fastifyServer.register(watchroomRoutes, {

@@ -1,7 +1,7 @@
 import { ExternalServiceError } from '../../../../common/errors/externalServiceError.ts';
 import { ResourceNotFoundError } from '../../../../common/errors/resourceNotFoundError.ts';
-import type { SearchSeriesParams, TmdbService } from '../../domain/services/tmdbService.ts';
-import type { Series, SeriesDetails, SeriesSearchResult, SeriesExternalIds } from '../../domain/types/series.ts';
+import type { SearchSeriesParams, SeriesSearchResult, TmdbService } from '../../domain/services/tmdbService.ts';
+import type { TmdbSeries, TmdbSeriesDetails, TmdbSeriesExternalIds } from '../../domain/types/tmdbSeries.ts';
 
 interface TmdbApiSeriesResponse {
   readonly id: number;
@@ -110,7 +110,7 @@ export class TmdbServiceImpl implements TmdbService {
     return result;
   }
 
-  public async getSeriesDetails(seriesTmdbId: number): Promise<SeriesDetails> {
+  public async getSeriesDetails(seriesTmdbId: number): Promise<TmdbSeriesDetails> {
     const url = new URL(`${this.baseUrl}/tv/${seriesTmdbId.toString()}`);
     url.searchParams.append('api_key', this.apiKey);
 
@@ -155,7 +155,7 @@ export class TmdbServiceImpl implements TmdbService {
     }
   }
 
-  public async getSeriesExternalIds(seriesTmdbId: number): Promise<SeriesExternalIds> {
+  public async getSeriesExternalIds(seriesTmdbId: number): Promise<TmdbSeriesExternalIds> {
     const url = new URL(`${this.baseUrl}/tv/${seriesTmdbId.toString()}/external_ids`);
     url.searchParams.append('api_key', this.apiKey);
 
@@ -200,8 +200,8 @@ export class TmdbServiceImpl implements TmdbService {
     }
   }
 
-  private mapToSeries(apiSeries: TmdbApiSeriesResponse): Series {
-    const series: Series = {
+  private mapToSeries(apiSeries: TmdbApiSeriesResponse): TmdbSeries {
+    const series: TmdbSeries = {
       id: apiSeries.id,
       name: apiSeries.name,
       posterPath: apiSeries.poster_path,
@@ -216,7 +216,7 @@ export class TmdbServiceImpl implements TmdbService {
     return series;
   }
 
-  private mapToSeriesDetails(apiDetails: TmdbApiSeriesDetailsResponse): SeriesDetails {
+  private mapToSeriesDetails(apiDetails: TmdbApiSeriesDetailsResponse): TmdbSeriesDetails {
     return {
       id: apiDetails.id,
       name: apiDetails.name,
@@ -232,7 +232,7 @@ export class TmdbServiceImpl implements TmdbService {
     };
   }
 
-  private mapToSeriesExternalIds(apiExternalIds: TmdbApiExternalIdsResponse): SeriesExternalIds {
+  private mapToSeriesExternalIds(apiExternalIds: TmdbApiExternalIdsResponse): TmdbSeriesExternalIds {
     return {
       imdbId: apiExternalIds.imdb_id,
       tvdbId: apiExternalIds.tvdb_id,

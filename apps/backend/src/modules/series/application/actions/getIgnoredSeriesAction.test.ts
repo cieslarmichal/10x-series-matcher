@@ -4,16 +4,16 @@ import { Generator } from '../../../../../tests/generator.ts';
 import { createConfig } from '../../../../core/config.ts';
 import { Database } from '../../../../infrastructure/database/database.ts';
 import { users, userIgnoredSeries } from '../../../../infrastructure/database/schema.ts';
+import { UserRepositoryImpl } from '../../../user/infrastructure/repositories/userRepositoryImpl.ts';
 import { IgnoredSeriesRepositoryImpl } from '../../infrastructure/repositories/ignoredSeriesRepositoryImpl.ts';
-import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 
-import { GetUserIgnoredSeriesAction } from './getUserIgnoredSeriesAction.ts';
+import { GetIgnoredSeriesAction } from './getIgnoredSeriesAction.ts';
 
-describe('GetUserIgnoredSeriesAction', () => {
+describe('GetIgnoredSeriesAction', () => {
   let database: Database;
   let userRepository: UserRepositoryImpl;
   let ignoredSeriesRepository: IgnoredSeriesRepositoryImpl;
-  let getUserIgnoredSeriesAction: GetUserIgnoredSeriesAction;
+  let getIgnoredSeriesAction: GetIgnoredSeriesAction;
 
   beforeEach(async () => {
     const config = createConfig();
@@ -21,7 +21,7 @@ describe('GetUserIgnoredSeriesAction', () => {
     userRepository = new UserRepositoryImpl(database);
     ignoredSeriesRepository = new IgnoredSeriesRepositoryImpl(database);
 
-    getUserIgnoredSeriesAction = new GetUserIgnoredSeriesAction(ignoredSeriesRepository);
+    getIgnoredSeriesAction = new GetIgnoredSeriesAction(ignoredSeriesRepository);
 
     await database.db.delete(userIgnoredSeries);
     await database.db.delete(users);
@@ -44,7 +44,7 @@ describe('GetUserIgnoredSeriesAction', () => {
       await ignoredSeriesRepository.create({ userId: user.id, seriesTmdbId: seriesTmdbId1 });
       await ignoredSeriesRepository.create({ userId: user.id, seriesTmdbId: seriesTmdbId2 });
 
-      const result = await getUserIgnoredSeriesAction.execute({
+      const result = await getIgnoredSeriesAction.execute({
         userId: user.id,
         page: 1,
         pageSize: 10,
@@ -59,7 +59,7 @@ describe('GetUserIgnoredSeriesAction', () => {
       const userData = Generator.userData();
       const user = await userRepository.create(userData);
 
-      const result = await getUserIgnoredSeriesAction.execute({
+      const result = await getIgnoredSeriesAction.execute({
         userId: user.id,
         page: 1,
         pageSize: 10,

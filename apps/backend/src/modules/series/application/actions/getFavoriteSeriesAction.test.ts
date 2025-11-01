@@ -4,16 +4,16 @@ import { Generator } from '../../../../../tests/generator.ts';
 import { createConfig } from '../../../../core/config.ts';
 import { Database } from '../../../../infrastructure/database/database.ts';
 import { users, userFavoriteSeries } from '../../../../infrastructure/database/schema.ts';
+import { UserRepositoryImpl } from '../../../user/infrastructure/repositories/userRepositoryImpl.ts';
 import { FavoriteSeriesRepositoryImpl } from '../../infrastructure/repositories/favoriteSeriesRepositoryImpl.ts';
-import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 
-import { GetUserFavoriteSeriesAction } from './getUserFavoriteSeriesAction.ts';
+import { GetFavoriteSeriesAction } from './getFavoriteSeriesAction.ts';
 
-describe('GetUserFavoriteSeriesAction', () => {
+describe('GetFavoriteSeriesAction', () => {
   let database: Database;
   let userRepository: UserRepositoryImpl;
   let favoriteSeriesRepository: FavoriteSeriesRepositoryImpl;
-  let getUserFavoriteSeriesAction: GetUserFavoriteSeriesAction;
+  let getFavoriteSeriesAction: GetFavoriteSeriesAction;
 
   beforeEach(async () => {
     const config = createConfig();
@@ -21,7 +21,7 @@ describe('GetUserFavoriteSeriesAction', () => {
     userRepository = new UserRepositoryImpl(database);
     favoriteSeriesRepository = new FavoriteSeriesRepositoryImpl(database);
 
-    getUserFavoriteSeriesAction = new GetUserFavoriteSeriesAction(favoriteSeriesRepository);
+    getFavoriteSeriesAction = new GetFavoriteSeriesAction(favoriteSeriesRepository);
 
     await database.db.delete(userFavoriteSeries);
     await database.db.delete(users);
@@ -44,7 +44,7 @@ describe('GetUserFavoriteSeriesAction', () => {
       await favoriteSeriesRepository.create({ userId: user.id, seriesTmdbId: seriesTmdbId1 });
       await favoriteSeriesRepository.create({ userId: user.id, seriesTmdbId: seriesTmdbId2 });
 
-      const result = await getUserFavoriteSeriesAction.execute({
+      const result = await getFavoriteSeriesAction.execute({
         userId: user.id,
         page: 1,
         pageSize: 10,
@@ -59,7 +59,7 @@ describe('GetUserFavoriteSeriesAction', () => {
       const userData = Generator.userData();
       const user = await userRepository.create(userData);
 
-      const result = await getUserFavoriteSeriesAction.execute({
+      const result = await getFavoriteSeriesAction.execute({
         userId: user.id,
         page: 1,
         pageSize: 10,
