@@ -42,6 +42,22 @@ export const userFavoriteSeries = pgTable(
   ],
 );
 
+export const userIgnoredSeries = pgTable(
+  'user_ignored_series',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    seriesTmdbId: integer('series_tmdb_id').notNull(),
+    ignoredAt: timestamp('ignored_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('idx_user_ignored_series_user_id').on(table.userId),
+    index('idx_user_ignored_series_user_series_tmdb_id').on(table.userId, table.seriesTmdbId),
+  ],
+);
+
 export const watchrooms = pgTable(
   'watchrooms',
   {

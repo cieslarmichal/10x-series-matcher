@@ -202,6 +202,47 @@
 - **Success Codes**: `204 No Content`
 - **Error Codes**: `401 Unauthorized`, `404 Not Found` (Series not in favorites)
 
+#### Get ignored series
+
+- **Method**: `GET`
+- **Path**: `/users/me/ignored-series`
+- **Description**: Retrieves the user's list of ignored series.
+- **Authentication**: Required.
+- **Query Parameters**:
+  - `page` (integer, optional, default: 1): The page number for pagination.
+  - `limit` (integer, optional, default: 20): The number of items per page.
+- **Response Body**:
+
+  ```json
+  {
+    "data": [
+      {
+        "seriesTmdbId": 1402,
+        "ignoredAt": "iso-8601-date-string"
+      }
+    ],
+    "metadata": {
+      "page": 1,
+      "pageSize": 20,
+      "total": 15
+    }
+  }
+  ```
+
+- **Success Codes**: `200 OK`
+- **Error Codes**: `401 Unauthorized`
+
+#### Remove an ignored series
+
+- **Method**: `DELETE`
+- **Path**: `/users/me/ignored-series/:seriesTmdbId`
+- **Description**: Removes a series from the user's list of ignored series.
+- **Authentication**: Required.
+- **URL Parameters**:
+  - `seriesTmdbId` (integer): The TMDB ID of the series to remove.
+- **Success Codes**: `204 No Content`
+- **Error Codes**: `401 Unauthorized`, `404 Not Found` (Series not in ignored list)
+
 ---
 
 ### Series (TMDB Proxy)
@@ -449,7 +490,7 @@
 
 - **Method**: `POST`
 - **Path**: `/watchrooms/:watchroomId/recommendations`
-- **Description**: Triggers the AI to generate new recommendations for the watchroom based on the participants' favorite series. This action can only be performed by the watchroom owner.
+- **Description**: Triggers the AI to generate new recommendations for the watchroom based on the participants' favorite series and excluding ignored series. This action can only be performed by the watchroom owner.
 - **Authentication**: Required. User must be the owner.
 - **Request Body**: (Empty)
 - **Response Body**:
@@ -463,10 +504,29 @@
 - **Success Codes**: `202 Accepted`
 - **Error Codes**: `401 Unauthorized`, `403 Forbidden` (Not the owner), `404 Not Found`, `409 Conflict` (Generation already in progress)
 
+#### Ignore a recommendation
+
+- **Method**: `POST`
+- **Path**: `/watchrooms/:watchroomId/recommendations/:seriesTmdbId/ignore`
+- **Description**: Marks a series as ignored for the current user. The series will be added to the user's personal list of ignored series and will not appear in future recommendations.
+- **Authentication**: Required. User must be a participant.
+- **URL Parameters**:
+  - `seriesTmdbId` (integer): The TMDB ID of the series to ignore.
+- **Response Body**:
+
+  ```json
+  {
+    "message": "Series added to your ignored list."
+  }
+  ```
+
+- **Success Codes**: `201 Created`
+- **Error Codes**: `401 Unauthorized`, `403 Forbidden` (Not a participant), `404 Not Found`, `409 Conflict` (Series already ignored)
+
 ## Implementation plan
 
 1. User Module
-This module handles everything related to user accounts, authentication, and user-specific data like favorite series.
+This module handles everything related to user accounts, authentication, and user-specific data like favorite series and ignored series.
 Endpoints:
 POST /users/register
 POST /users/login
@@ -477,6 +537,8 @@ DELETE /users/me
 GET /users/me/favorite-series
 POST /users/me/favorite-series
 DELETE /users/me/favorite-series/:seriesTmdbId
+GET /users/me/ignored-series
+DELETE /users/me/ignored-series/:seriesTmdbId
 2. Watchroom Module
 This module would be responsible for all operations related to watchrooms, including creation, management, and participant actions.
 Endpoints:
@@ -489,6 +551,7 @@ PATCH /watchrooms/:watchroomId
 DELETE /watchrooms/:watchroomId/participants/me
 DELETE /watchrooms/:watchroomId/participants/:userId
 POST /watchrooms/:watchroomId/recommendations
+POST /watchrooms/:watchroomId/recommendations/:seriesTmdbId/ignore
 GET /watchrooms/:watchroomId/recommendations
 DELETE /watchrooms/:watchroomId/recommendations/:recommendationId
 3. Series Module

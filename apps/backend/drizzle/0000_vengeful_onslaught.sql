@@ -13,6 +13,13 @@ CREATE TABLE "user_favorite_series" (
 	"added_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "user_ignored_series" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"user_id" uuid NOT NULL,
+	"series_tmdb_id" integer NOT NULL,
+	"ignored_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "user_sessions" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -53,6 +60,7 @@ CREATE TABLE "watchrooms" (
 --> statement-breakpoint
 ALTER TABLE "recommendations" ADD CONSTRAINT "recommendations_watchroom_id_watchrooms_id_fk" FOREIGN KEY ("watchroom_id") REFERENCES "public"."watchrooms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_favorite_series" ADD CONSTRAINT "user_favorite_series_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "user_ignored_series" ADD CONSTRAINT "user_ignored_series_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_sessions" ADD CONSTRAINT "user_sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "watchroom_participants" ADD CONSTRAINT "watchroom_participants_watchroom_id_watchrooms_id_fk" FOREIGN KEY ("watchroom_id") REFERENCES "public"."watchrooms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "watchroom_participants" ADD CONSTRAINT "watchroom_participants_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -62,6 +70,8 @@ CREATE INDEX "idx_recommendations_series_tmdb_id" ON "recommendations" USING btr
 CREATE INDEX "idx_recommendations_request_id" ON "recommendations" USING btree ("request_id");--> statement-breakpoint
 CREATE INDEX "idx_user_favorite_series_user_id" ON "user_favorite_series" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_user_favorite_series_user_series_tmdb_id" ON "user_favorite_series" USING btree ("user_id","series_tmdb_id");--> statement-breakpoint
+CREATE INDEX "idx_user_ignored_series_user_id" ON "user_ignored_series" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_user_ignored_series_user_series_tmdb_id" ON "user_ignored_series" USING btree ("user_id","series_tmdb_id");--> statement-breakpoint
 CREATE INDEX "idx_user_sessions_user_id" ON "user_sessions" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_watchroom_participants_watchroom_id" ON "watchroom_participants" USING btree ("watchroom_id");--> statement-breakpoint
 CREATE INDEX "idx_watchroom_participants_user_id" ON "watchroom_participants" USING btree ("user_id");--> statement-breakpoint

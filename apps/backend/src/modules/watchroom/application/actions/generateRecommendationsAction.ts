@@ -5,6 +5,7 @@ import type { OpenRouterService } from '../../../../common/openRouter/openRouter
 import type { ResponseFormat } from '../../../../common/openRouter/types.ts';
 import type { TmdbService } from '../../../series/domain/services/tmdbService.ts';
 import type { FavoriteSeriesRepository } from '../../../user/domain/repositories/favoriteSeriesRepository.ts';
+import type { IgnoredSeriesRepository } from '../../../user/domain/repositories/ignoredSeriesRepository.ts';
 import type { RecommendationRepository } from '../../domain/repositories/recommendationRepository.ts';
 import type { WatchroomRepository } from '../../domain/repositories/watchroomRepository.ts';
 
@@ -77,6 +78,7 @@ export class GenerateRecommendationsAction {
   private readonly watchroomRepository: WatchroomRepository;
   private readonly recommendationRepository: RecommendationRepository;
   private readonly favoriteSeriesRepository: FavoriteSeriesRepository;
+  private readonly ignoredSeriesRepository: IgnoredSeriesRepository;
   private readonly tmdbService: TmdbService;
   private readonly openRouterService: OpenRouterService;
   private readonly loggerService: LoggerService;
@@ -85,6 +87,7 @@ export class GenerateRecommendationsAction {
     watchroomRepository: WatchroomRepository,
     recommendationRepository: RecommendationRepository,
     favoriteSeriesRepository: FavoriteSeriesRepository,
+    ignoredSeriesRepository: IgnoredSeriesRepository,
     tmdbService: TmdbService,
     openRouterService: OpenRouterService,
     loggerService: LoggerService,
@@ -92,6 +95,7 @@ export class GenerateRecommendationsAction {
     this.watchroomRepository = watchroomRepository;
     this.recommendationRepository = recommendationRepository;
     this.favoriteSeriesRepository = favoriteSeriesRepository;
+    this.ignoredSeriesRepository = ignoredSeriesRepository;
     this.tmdbService = tmdbService;
     this.openRouterService = openRouterService;
     this.loggerService = loggerService;
@@ -141,6 +145,32 @@ export class GenerateRecommendationsAction {
       }),
     );
 
+    // Fetch all participants' ignored series
+    this.loggerService.debug({
+      message: 'Fetching ignored series for all participants',
+      watchroomId,
+      participantCount: participantIds.length,
+    });
+
+    const participantIgnored = await Promise.all(
+      participantIds.map(async (participantId) => {
+        const ignored = await this.ignoredSeriesRepository.findMany(participantId, 1, 100);
+        return {
+          participantId,
+          seriesTmdbIds: ignored.map((i) => i.seriesTmdbId),
+        };
+      }),
+    );
+
+    // Aggregate all ignored series IDs (unique)
+    const allIgnoredSeriesIds = [...new Set(participantIgnored.flatMap((p) => p.seriesTmdbIds))];
+
+    this.loggerService.debug({
+      message: 'Aggregated ignored series',
+      watchroomId,
+      totalIgnored: allIgnoredSeriesIds.length,
+    });
+
     // Fetch series details from TMDB to provide context to the LLM
     const allSeriesIds = [...new Set(participantFavorites.flatMap((p) => p.seriesTmdbIds))];
 
@@ -162,6 +192,7 @@ export class GenerateRecommendationsAction {
     // Generate AI recommendations with enriched series information
     const aiRecommendations = await this.generateAIRecommendations(
       participantFavorites,
+      allIgnoredSeriesIds,
       seriesInfoMap,
       watchroom.name,
       watchroom.description,
@@ -174,7 +205,11 @@ export class GenerateRecommendationsAction {
     });
 
     // Resolve series names to TMDB IDs by searching TMDB
-    const resolvedRecommendations = await this.resolveSeriesNames(aiRecommendations, allSeriesIds);
+    const resolvedRecommendations = await this.resolveSeriesNames(
+      aiRecommendations,
+      allSeriesIds,
+      allIgnoredSeriesIds,
+    );
 
     this.loggerService.info({
       message: 'Series names resolved to TMDB IDs',
@@ -242,6 +277,7 @@ export class GenerateRecommendationsAction {
   private async resolveSeriesNames(
     recommendations: AIRecommendation[],
     favoritesSeriesIds: number[],
+    ignoredSeriesIds: number[],
   ): Promise<Array<{ seriesTmdbId: number; justification: string }>> {
     const resolvedRecommendations: Array<{ seriesTmdbId: number; justification: string }> = [];
 
@@ -283,6 +319,16 @@ export class GenerateRecommendationsAction {
           continue;
         }
 
+        // Filter out series that are in ignored list
+        if (ignoredSeriesIds.includes(firstResult.id)) {
+          this.loggerService.debug({
+            message: 'Filtering out recommendation in ignored list',
+            seriesName: recommendation.seriesName,
+            seriesTmdbId: firstResult.id,
+          });
+          continue;
+        }
+
         resolvedRecommendations.push({
           seriesTmdbId: firstResult.id,
           justification: recommendation.justification,
@@ -308,12 +354,14 @@ export class GenerateRecommendationsAction {
 
   private async generateAIRecommendations(
     participantFavorites: Array<{ participantId: string; seriesTmdbIds: number[] }>,
+    ignoredSeriesIds: number[],
     seriesInfoMap: Map<number, SeriesInfo>,
     watchroomName: string,
     watchroomDescription: string | undefined,
   ): Promise<AIRecommendation[]> {
     const userMessage = this.buildPromptMessage(
       participantFavorites,
+      ignoredSeriesIds,
       seriesInfoMap,
       watchroomName,
       watchroomDescription,
@@ -335,6 +383,7 @@ export class GenerateRecommendationsAction {
 
   private buildPromptMessage(
     participantFavorites: Array<{ participantId: string; seriesTmdbIds: number[] }>,
+    ignoredSeriesIds: number[],
     seriesInfoMap: Map<number, SeriesInfo>,
     watchroomName: string,
     watchroomDescription: string | undefined,
@@ -363,11 +412,27 @@ export class GenerateRecommendationsAction {
 
     // Collect all favorite series names to show in the prompt
     const allFavoriteNames = Array.from(seriesInfoMap.values()).map((info) => info.name);
-    message += `\nExclude these series from recommendations (already in favorites): ${allFavoriteNames.join(', ')}\n\n`;
+    message += `\nEXCLUDE these series from recommendations (already in favorites): ${allFavoriteNames.join(', ')}\n`;
 
-    message += `Based on the above preferences, recommend 5-10 NEW TV series that this group would enjoy watching together. `;
+    // Add ignored series to exclusion list
+    if (ignoredSeriesIds.length > 0) {
+      // Fetch names for ignored series
+      const ignoredNames: string[] = [];
+      for (const tmdbId of ignoredSeriesIds) {
+        const seriesInfo = seriesInfoMap.get(tmdbId);
+        if (seriesInfo) {
+          ignoredNames.push(seriesInfo.name);
+        }
+      }
+      if (ignoredNames.length > 0) {
+        message += `\nALSO EXCLUDE these series (marked as not interested by participants): ${ignoredNames.join(', ')}\n`;
+      }
+    }
+
+    message += `\nBased on the above preferences, recommend 5-10 NEW TV series that this group would enjoy watching together. `;
     message += `Return the EXACT TITLE of each series as it appears in TMDB (The Movie Database). `;
-    message += `Provide short justification for each recommendation explaining why it fits the group's collective tastes.`;
+    message += `Provide short justification for each recommendation explaining why it fits the group's collective tastes. `;
+    message += `IMPORTANT: Do NOT recommend any series from the exclusion lists above.`;
 
     return message;
   }

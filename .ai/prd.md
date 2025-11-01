@@ -28,6 +28,7 @@ Grupy osób często napotykają trudności przy wspólnej decyzji, co obejrzeć.
 - FR-02: Budowanie profilu preferencji
   - Funkcjonalność wyszukiwania seriali w oparciu o integrację z API TMDB.
   - Możliwość dodawania i usuwania seriali z osobistej listy "ulubionych".
+  - Możliwość oznaczania seriali jako "zignorowane" podczas przeglądania rekomendacji.
 - FR-03: Zarządzanie sesjami ("pokojami")
   - Możliwość utworzenia nowego "pokoju oglądania" przez zalogowanego użytkownika.
   - Automatyczne generowanie unikalnego, publicznego linku do pokoju.
@@ -39,6 +40,10 @@ Grupy osób często napotykają trudności przy wspólnej decyzji, co obejrzeć.
 - FR-06: Wyświetlanie wyników
   - Interfejs prezentujący listę 3-5 polecanych seriali.
   - Każda propozycja zawiera tytuł, plakat, krótki opis (z TMDB) oraz wygenerowane przez AI uzasadnienie dopasowania do gustu grupy.
+  - Możliwość oznaczenia rekomendacji jako "nie interesuje mnie", co dodaje serial do osobistej listy ignorowanych użytkownika.
+- FR-07: Filtrowanie rekomendacji
+  - Seriale oznaczone jako "zignorowane" przez któregokolwiek uczestnika pokoju nie będą uwzględniane w przyszłych rekomendacjach dla tego pokoju.
+  - Każdy użytkownik buduje własną listę ignorowanych seriali, która jest używana globalnie we wszystkich pokojach, w których uczestniczy.
 
 ## 4. Granice produktu
 
@@ -118,6 +123,14 @@ Grupy osób często napotykają trudności przy wspólnej decyzji, co obejrzeć.
   - Przy każdym serialu na liście ulubionych znajduje się przycisk "Usuń".
   - Po kliknięciu przycisku serial znika z listy.
 
+- ID: US-007a
+- Tytuł: Przeglądanie listy ignorowanych seriali
+- Opis: Jako zalogowany użytkownik, chcę móc zobaczyć listę seriali, które oznaczyłem jako "nie interesuje mnie", aby w razie potrzeby móc zmienić zdanie.
+- Kryteria akceptacji:
+  - Na stronie profilu znajduje się sekcja "Ignorowane seriale".
+  - Lista wyświetla wszystkie seriale, które użytkownik zignorował w różnych pokojach.
+  - Przy każdym serialu znajduje się przycisk "Usuń z ignorowanych".
+
 ### Sesje i rekomendacje
 
 - ID: US-008
@@ -160,6 +173,24 @@ Grupy osób często napotykają trudności przy wspólnej decyzji, co obejrzeć.
   - Po zakończeniu generowania, na stronie pokoju wyświetla się 3-5 rekomendacji.
   - Każda rekomendacja zawiera plakat, tytuł, krótki opis oraz wygenerowane przez AI uzasadnienie.
   - Uzasadnienie wyjaśnia, dlaczego dany serial jest dobrym wyborem dla obecnej grupy.
+
+- ID: US-013
+- Tytuł: Ignorowanie rekomendacji
+- Opis: Jako uczestnik pokoju, chcę móc oznaczyć rekomendację jako "nie interesuje mnie", aby system wiedział, że nie chcę oglądać tego serialu.
+- Kryteria akceptacji:
+  - Przy każdej rekomendacji znajduje się przycisk "Nie interesuje mnie".
+  - Po kliknięciu przycisku serial zostaje dodany do mojej osobistej listy ignorowanych.
+  - Wyświetlany jest komunikat: "Dzięki! Nie pokażemy Ci tego serialu w przyszłych rekomendacjach".
+  - Serial pozostaje widoczny dla innych uczestników (którzy mogą go rozważyć).
+
+- ID: US-014
+- Tytuł: Regenerowanie rekomendacji z uwzględnieniem ignorowanych
+- Opis: Jako założyciel pokoju, chcę móc wygenerować nowe rekomendacje, które wykluczają seriale zignorowane przez uczestników.
+- Kryteria akceptacji:
+  - Gdy wszyscy uczestnicy zignorują wszystkie aktualne rekomendacje, wyświetla się komunikat: "Odrzuciliście wszystkie propozycje. Chcecie spróbować ponownie?".
+  - Przycisk "Generuj ponownie" uruchamia proces generowania nowych rekomendacji.
+  - System wysyła do API OpenAI listy ulubionych oraz listy ignorowanych seriali wszystkich uczestników.
+  - Nowe rekomendacje nie zawierają żadnych seriali, które są w listach ignorowanych uczestników.
 
 ## 6. Metryki sukcesu
 

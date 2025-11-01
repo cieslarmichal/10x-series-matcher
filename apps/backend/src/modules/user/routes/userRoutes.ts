@@ -8,28 +8,37 @@ import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
 import { AddFavoriteSeriesAction } from '../application/actions/addFavoriteSeriesAction.ts';
+import { AddIgnoredSeriesAction } from '../application/actions/addIgnoredSeriesAction.ts';
 import { ChangePasswordAction } from '../application/actions/changePasswordAction.ts';
 import { CreateUserAction } from '../application/actions/createUserAction.ts';
 import { DeleteUserAction } from '../application/actions/deleteUserAction.ts';
 import { FindUserAction } from '../application/actions/findUserAction.ts';
 import { GetUserFavoriteSeriesAction } from '../application/actions/getUserFavoriteSeriesAction.ts';
+import { GetUserIgnoredSeriesAction } from '../application/actions/getUserIgnoredSeriesAction.ts';
 import { LoginUserAction } from '../application/actions/loginUserAction.ts';
 import { LogoutUserAction } from '../application/actions/logoutUserAction.ts';
 import { RefreshTokenAction } from '../application/actions/refreshTokenAction.ts';
 import { RemoveFavoriteSeriesAction } from '../application/actions/removeFavoriteSeriesAction.ts';
+import { RemoveIgnoredSeriesAction } from '../application/actions/removeIgnoredSeriesAction.ts';
 import { PasswordService } from '../application/services/passwordService.ts';
 import type { User } from '../domain/types/user.ts';
 import { FavoriteSeriesRepositoryImpl } from '../infrastructure/repositories/favoriteSeriesRepositoryImpl.ts';
+import { IgnoredSeriesRepositoryImpl } from '../infrastructure/repositories/ignoredSeriesRepositoryImpl.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
 import { UserSessionRepositoryImpl } from '../infrastructure/repositories/userSessionRepositoryImpl.ts';
 
 import {
   addFavoriteSeriesRequestSchema,
+  addIgnoredSeriesRequestSchema,
   changePasswordRequestSchema,
   favoriteSeriesListSchema,
   favoriteSeriesParamsSchema,
   favoriteSeriesQuerySchema,
   favoriteSeriesSchema,
+  ignoredSeriesListSchema,
+  ignoredSeriesParamsSchema,
+  ignoredSeriesQuerySchema,
+  ignoredSeriesSchema,
   loginRequestSchema,
   loginResponseSchema,
   registerRequestSchema,
@@ -78,6 +87,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   const userRepository = new UserRepositoryImpl(database);
   const favoriteSeriesRepository = new FavoriteSeriesRepositoryImpl(database);
+  const ignoredSeriesRepository = new IgnoredSeriesRepositoryImpl(database);
   const userSessionRepository = new UserSessionRepositoryImpl(database);
   const passwordService = new PasswordService(config);
 
@@ -103,6 +113,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   const getUserFavoriteSeriesAction = new GetUserFavoriteSeriesAction(favoriteSeriesRepository);
   const addFavoriteSeriesAction = new AddFavoriteSeriesAction(favoriteSeriesRepository);
   const removeFavoriteSeriesAction = new RemoveFavoriteSeriesAction(favoriteSeriesRepository);
+  const getUserIgnoredSeriesAction = new GetUserIgnoredSeriesAction(ignoredSeriesRepository);
+  const addIgnoredSeriesAction = new AddIgnoredSeriesAction(ignoredSeriesRepository);
+  const removeIgnoredSeriesAction = new RemoveIgnoredSeriesAction(ignoredSeriesRepository);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
 
@@ -293,6 +306,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
+  // TODO: move to series module
   fastify.get('/users/me/favorite-series', {
     schema: {
       querystring: favoriteSeriesQuerySchema,
@@ -373,6 +387,92 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       const { seriesTmdbId } = request.params;
 
       await removeFavoriteSeriesAction.execute(userId, seriesTmdbId);
+
+      return reply.status(204).send();
+    },
+  });
+
+  // TODO: move to series module
+  fastify.get('/users/me/ignored-series', {
+    schema: {
+      querystring: ignoredSeriesQuerySchema,
+      response: {
+        200: ignoredSeriesListSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { page = 1, pageSize = 20 } = request.query;
+
+      const { data, total } = await getUserIgnoredSeriesAction.execute({ userId, page, pageSize });
+
+      return reply.send({
+        data: data.map((ignored) => ({
+          seriesTmdbId: ignored.seriesTmdbId,
+          ignoredAt: ignored.ignoredAt.toISOString(),
+        })),
+        metadata: {
+          page,
+          pageSize,
+          total,
+        },
+      });
+    },
+  });
+
+  fastify.post('/users/me/ignored-series', {
+    schema: {
+      body: addIgnoredSeriesRequestSchema,
+      response: {
+        201: ignoredSeriesSchema,
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { seriesTmdbId } = request.body;
+
+      const ignored = await addIgnoredSeriesAction.execute(userId, seriesTmdbId);
+
+      return reply.status(201).send({
+        seriesTmdbId: ignored.seriesTmdbId,
+        ignoredAt: ignored.ignoredAt.toISOString(),
+      });
+    },
+  });
+
+  fastify.delete('/users/me/ignored-series/:seriesTmdbId', {
+    schema: {
+      params: ignoredSeriesParamsSchema,
+      response: {
+        204: Type.Null(),
+      },
+    },
+    preHandler: [authenticationMiddleware],
+    handler: async (request, reply) => {
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
+      const { seriesTmdbId } = request.params;
+
+      await removeIgnoredSeriesAction.execute(userId, seriesTmdbId);
 
       return reply.status(204).send();
     },

@@ -7,7 +7,14 @@ import { closeTestServer, createTestContext } from '../../../../tests/helpers/te
 import type { Database } from '../../../infrastructure/database/database.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
 
-import type { FavoriteSeriesListResponse, FavoriteSeries, LoginResponse, UserResponse } from './userSchemas.ts';
+import type {
+  FavoriteSeriesListResponse,
+  FavoriteSeries,
+  IgnoredSeriesListResponse,
+  IgnoredSeries,
+  LoginResponse,
+  UserResponse,
+} from './userSchemas.ts';
 
 describe('User Routes Integration Tests', () => {
   let server: FastifyInstance;
@@ -688,6 +695,364 @@ describe('User Routes Integration Tests', () => {
       const response = await server.inject({
         method: 'DELETE',
         url: '/users/me/favorite-series/12345',
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+  });
+
+  describe('GET /users/me/ignored-series', () => {
+    it('should return empty list for user with no ignored series', async () => {
+      const userData = {
+        name: Generator.firstName(),
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      // Register user
+      await server.inject({
+        method: 'POST',
+        url: '/users/register',
+        payload: userData,
+      });
+
+      // Login
+      const loginResponse = await server.inject({
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: userData.email,
+          password: userData.password,
+        },
+      });
+
+      const loginBody = loginResponse.json<LoginResponse>();
+
+      // Get ignored series
+      const response = await server.inject({
+        method: 'GET',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const body = response.json<IgnoredSeriesListResponse>();
+
+      expect(body.data).toHaveLength(0);
+      expect(body.metadata).toMatchObject({
+        page: 1,
+        pageSize: 20,
+        total: 0,
+      });
+    });
+
+    it('should return paginated list of ignored series', async () => {
+      const userData = {
+        name: Generator.firstName(),
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      // Register user
+      await server.inject({
+        method: 'POST',
+        url: '/users/register',
+        payload: userData,
+      });
+
+      // Login
+      const loginResponse = await server.inject({
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: userData.email,
+          password: userData.password,
+        },
+      });
+
+      const loginBody = loginResponse.json<LoginResponse>();
+
+      const seriesTmdbId1 = 12345;
+      const seriesTmdbId2 = 67890;
+
+      // Add ignored series
+      await server.inject({
+        method: 'POST',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+        payload: { seriesTmdbId: seriesTmdbId1 },
+      });
+
+      await server.inject({
+        method: 'POST',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+        payload: { seriesTmdbId: seriesTmdbId2 },
+      });
+
+      // Get ignored series
+      const response = await server.inject({
+        method: 'GET',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const body = response.json<IgnoredSeriesListResponse>();
+
+      expect(body.data).toHaveLength(2);
+      expect(body.metadata.total).toBe(2);
+      expect(body.data.map((s) => s.seriesTmdbId)).toContain(seriesTmdbId1);
+      expect(body.data.map((s) => s.seriesTmdbId)).toContain(seriesTmdbId2);
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/users/me/ignored-series',
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+  });
+
+  describe('POST /users/me/ignored-series', () => {
+    it('should add series to ignored list', async () => {
+      const userData = {
+        name: Generator.firstName(),
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      // Register user
+      await server.inject({
+        method: 'POST',
+        url: '/users/register',
+        payload: userData,
+      });
+
+      // Login
+      const loginResponse = await server.inject({
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: userData.email,
+          password: userData.password,
+        },
+      });
+
+      const loginBody = loginResponse.json<LoginResponse>();
+
+      const seriesTmdbId = 12345;
+
+      // Add to ignored
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+        payload: {
+          seriesTmdbId,
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+
+      const body = response.json<IgnoredSeries>();
+
+      expect(body.seriesTmdbId).toBe(seriesTmdbId);
+      expect(body.ignoredAt).toBeTypeOf('string');
+      expect(new Date(body.ignoredAt).getTime()).toBeGreaterThan(0);
+    });
+
+    it('should return 409 when series is already ignored', async () => {
+      const userData = {
+        name: Generator.firstName(),
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      // Register user
+      await server.inject({
+        method: 'POST',
+        url: '/users/register',
+        payload: userData,
+      });
+
+      // Login
+      const loginResponse = await server.inject({
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: userData.email,
+          password: userData.password,
+        },
+      });
+
+      const loginBody = loginResponse.json<LoginResponse>();
+
+      const seriesTmdbId = 12345;
+
+      // Add to ignored first time
+      await server.inject({
+        method: 'POST',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+        payload: {
+          seriesTmdbId,
+        },
+      });
+
+      // Try to add again
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+        payload: {
+          seriesTmdbId,
+        },
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/me/ignored-series',
+        payload: {
+          seriesTmdbId: 12345,
+        },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+  });
+
+  describe('DELETE /users/me/ignored-series/:seriesTmdbId', () => {
+    it('should remove series from ignored list', async () => {
+      const userData = {
+        name: Generator.firstName(),
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      // Register user
+      await server.inject({
+        method: 'POST',
+        url: '/users/register',
+        payload: userData,
+      });
+
+      // Login
+      const loginResponse = await server.inject({
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: userData.email,
+          password: userData.password,
+        },
+      });
+
+      const loginBody = loginResponse.json<LoginResponse>();
+
+      const seriesTmdbId = 12345;
+
+      // Add to ignored first
+      await server.inject({
+        method: 'POST',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+        payload: {
+          seriesTmdbId,
+        },
+      });
+
+      // Remove from ignored
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/users/me/ignored-series/${String(seriesTmdbId)}`,
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(204);
+
+      // Verify it was removed
+      const getResponse = await server.inject({
+        method: 'GET',
+        url: '/users/me/ignored-series',
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+      });
+
+      const body = getResponse.json<IgnoredSeriesListResponse>();
+      expect(body.data).toHaveLength(0);
+    });
+
+    it('should return 404 when series is not in ignored list', async () => {
+      const userData = {
+        name: Generator.firstName(),
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      // Register user
+      await server.inject({
+        method: 'POST',
+        url: '/users/register',
+        payload: userData,
+      });
+
+      // Login
+      const loginResponse = await server.inject({
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: userData.email,
+          password: userData.password,
+        },
+      });
+
+      const loginBody = loginResponse.json<LoginResponse>();
+
+      const seriesTmdbId = 12345;
+
+      // Try to remove without adding first
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/users/me/ignored-series/${String(seriesTmdbId)}`,
+        headers: {
+          authorization: `Bearer ${loginBody.accessToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      const response = await server.inject({
+        method: 'DELETE',
+        url: '/users/me/ignored-series/12345',
       });
 
       expect(response.statusCode).toBe(401);

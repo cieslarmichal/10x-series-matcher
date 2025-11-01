@@ -60,6 +60,26 @@ Tabela łącząca, przechowująca ulubione seriale dla każdego użytkownika.
 
 ---
 
+### Tabela `user_ignored_series`
+
+Tabela łącząca, przechowująca seriale ignorowane przez użytkownika. Seriale dodawane są do tej tabeli gdy użytkownik oznacza rekomendację jako "nie interesuje mnie".
+
+**Kolumny:**
+
+- `id` UUID PRIMARY KEY — Unikalny identyfikator
+- `user_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE — Identyfikator użytkownika
+- `series_tmdb_id` INTEGER NOT NULL — Identyfikator serialu z bazy danych TMDB
+- `ignored_at` TIMESTAMP NOT NULL DEFAULT NOW() — Data i czas dodania serialu do listy ignorowanych
+- UNIQUE (user_id, series_tmdb_id) — Unikalność pary użytkownik-serial
+
+**Indeksy:**
+
+- Automatyczny indeks na `id` (PRIMARY KEY)
+- Automatyczny indeks na `(user_id, series_tmdb_id)` (UNIQUE)
+- `CREATE INDEX idx_user_ignored_series_user_id ON user_ignored_series(user_id);` — Dla zapytań pobierających listę ignorowanych seriali użytkownika
+
+---
+
 ### Tabela `watchroom_participants`
 
 Tabela łącząca, śledząca przynależność użytkowników do pokoi.
@@ -108,6 +128,11 @@ Przechowuje rekomendacje seriali wygenerowane przez AI dla każdego pokoju.
   - Jeden użytkownik może mieć wiele ulubionych seriali.
   - Jeden serial może być ulubionym dla wielu użytkowników.
   - Relacja zrealizowana przez tabelę łączącą `user_favorite_series`. (Uwaga: dane seriali nie są przechowywane w naszej bazie, tylko ich identyfikatory).
+
+- **`users` ↔ `user_ignored_series` ↔ `series` (Wiele-do-wielu)**
+  - Jeden użytkownik może mieć wiele ignorowanych seriali.
+  - Jeden serial może być ignorowany przez wielu użytkowników.
+  - Relacja zrealizowana przez tabelę łączącą `user_ignored_series`. (Uwaga: dane seriali nie są przechowywane w naszej bazie, tylko ich identyfikatory).
 
 - **`watchrooms` ↔ `watchroom_participants` ↔ `users` (Wiele-do-wielu)**
   - Jeden pokój może mieć wielu uczestników.
@@ -181,4 +206,23 @@ Projekt świadomie rezygnuje z Row-Level Security na rzecz kontroli dostępu na 
 **Wyjątek - System AI**:
 
 - Podczas generowania rekomendacji dla pokoju, system agreguje ulubione wszystkich uczestników
+- Dostęp tylko w kontekście generowania rekomendacji (read-only)
+
+### Ignorowane seriale (`user_ignored_series`)
+
+**Właściciel danych** (`user_id`):
+
+- Może przeglądać tylko **własne** ignorowane seriale
+- Może dodawać nowe ignorowane seriale (poprzez oznaczenie rekomendacji jako "nie interesuje mnie")
+- Może usuwać swoje ignorowane seriale
+
+**Inni użytkownicy**:
+
+- NIE mogą przeglądać ignorowanych innych użytkowników
+- NIE mogą modyfikować cudzych ignorowanych
+
+**Wyjątek - System AI**:
+
+- Podczas generowania rekomendacji dla pokoju, system agreguje ignorowane seriale wszystkich uczestników
+- Jeśli którykolwiek uczestnik ma serial w ignorowanych, serial NIE zostanie zarekomendowany
 - Dostęp tylko w kontekście generowania rekomendacji (read-only)

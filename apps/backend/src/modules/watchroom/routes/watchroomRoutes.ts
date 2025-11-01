@@ -10,6 +10,7 @@ import type { Config } from '../../../core/config.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
 import { TmdbServiceImpl } from '../../series/infrastructure/services/tmdbServiceImpl.ts';
 import { FavoriteSeriesRepositoryImpl } from '../../user/infrastructure/repositories/favoriteSeriesRepositoryImpl.ts';
+import { IgnoredSeriesRepositoryImpl } from '../../user/infrastructure/repositories/ignoredSeriesRepositoryImpl.ts';
 import { CheckRecommendationStatusAction } from '../application/actions/checkRecommendationStatusAction.ts';
 import { CreateWatchroomAction } from '../application/actions/createWatchroomAction.ts';
 import { DeleteRecommendationAction } from '../application/actions/deleteRecommendationAction.ts';
@@ -64,6 +65,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
   const watchroomRepository = new WatchroomRepositoryImpl(database);
   const recommendationRepository = new RecommendationRepositoryImpl(database);
   const favoriteSeriesRepository = new FavoriteSeriesRepositoryImpl(database);
+  const ignoredSeriesRepository = new IgnoredSeriesRepositoryImpl(database);
   const tmdbService = new TmdbServiceImpl(config.tmdb.apiKey, config.tmdb.baseUrl);
 
   const createWatchroomAction = new CreateWatchroomAction(watchroomRepository, loggerService);
@@ -79,6 +81,7 @@ export const watchroomRoutes: FastifyPluginAsyncTypebox<{
     watchroomRepository,
     recommendationRepository,
     favoriteSeriesRepository,
+    ignoredSeriesRepository,
     tmdbService,
     openRouterService,
     loggerService,
